@@ -255,7 +255,7 @@
   50% { opacity: 0.6; }
 }
 
-/* Temperature Options */
+/* Temperature & Distance Options */
 .options-subtitle {
   text-align: center;
   margin-bottom: 20px;
@@ -270,13 +270,15 @@
   text-shadow: 0 0 10px var(--modal-text-secondary);
 }
 
-.temperature-options {
+.temperature-options,
+.distance-options {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.temperature-option {
+.temperature-option,
+.distance-option {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -285,13 +287,15 @@
   opacity: 0.7;
 }
 
-.temperature-buttons {
+.temperature-buttons,
+.distance-buttons {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.temperature-button {
+.temperature-button,
+.distance-button {
   background: transparent;
   border: 2px solid var(--modal-text-secondary);
   color: var(--modal-text-secondary);
@@ -307,14 +311,16 @@
   text-align: center;
 }
 
-.temperature-button:hover {
+.temperature-button:hover,
+.distance-button:hover {
   background: var(--modal-text-secondary);
   color: var(--modal-bg);
   box-shadow: 0 0 15px var(--modal-text-secondary);
   transform: translateY(-2px);
 }
 
-.temperature-button.active {
+.temperature-button.active,
+.distance-button.active {
   background: var(--modal-text-accent);
   border-color: var(--modal-text-accent);
   color: var(--modal-bg);
@@ -458,11 +464,13 @@
     font-size: 0.7rem;
   }
   
-  .temperature-buttons {
+  .temperature-buttons,
+  .distance-buttons {
     gap: 10px;
   }
   
-  .temperature-button {
+  .temperature-button,
+  .distance-button {
     padding: 10px 16px;
     font-size: 0.7rem;
   }

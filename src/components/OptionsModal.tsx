@@ -8,9 +8,11 @@ interface OptionsModalProps {
   onClose: () => void;
   temperatureUnit: 'c' | 'f';
   onTemperatureUnitChange: (unit: 'c' | 'f') => void;
+  distanceUnit: 'km' | 'mi';
+  onDistanceUnitChange: (unit: 'km' | 'mi') => void;
 }
 
-const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatureUnit, onTemperatureUnitChange }) => {
+const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatureUnit, onTemperatureUnitChange, distanceUnit, onDistanceUnitChange }) => {
   const { theme, setThemeManually, resetThemeToDefault } = useTheme();
   const ldClient = useLDClient();
 
@@ -154,6 +156,39 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
                     onClick={() => onTemperatureUnitChange('f')}
                   >
                     [ FAHRENHEIT (°F) ]
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="options-section">
+              <div className="options-subtitle">
+                <pre>
+{`
+█▀▄ █ █▀ ▀█▀ ▄▀█ █▄░█ █▀▀ █▀▀   █░█ █▄░█ █ ▀█▀ █▀
+█▄▀ █ ▄█ ░█░ █▀█ █░▀█ █▄▄ ██▄   █▄█ █░▀█ █ ░█░ ▄█
+`}
+                </pre>
+              </div>
+              
+              <div className="distance-options">
+                <div className="distance-option">
+                  <span className="option-label">Current Unit:</span>
+                  <span className="option-value">{distanceUnit === 'km' ? 'Kilometers (KM/H)' : 'Miles (MPH)'}</span>
+                </div>
+                
+                <div className="distance-buttons">
+                  <button 
+                    className={`distance-button ${distanceUnit === 'km' ? 'active' : ''}`}
+                    onClick={() => onDistanceUnitChange('km')}
+                  >
+                    [ KILOMETERS (KM/H) ]
+                  </button>
+                  <button 
+                    className={`distance-button ${distanceUnit === 'mi' ? 'active' : ''}`}
+                    onClick={() => onDistanceUnitChange('mi')}
+                  >
+                    [ MILES (MPH) ]
                   </button>
                 </div>
               </div>

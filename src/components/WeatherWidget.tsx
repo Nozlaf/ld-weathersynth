@@ -18,6 +18,7 @@ const WeatherWidget: React.FC = () => {
   const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f'>('c');
+  const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('km');
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
@@ -168,6 +169,10 @@ const WeatherWidget: React.FC = () => {
         console.log('🔍 DEBUG: default-temperature flag changed:', changes['default-temperature']);
         setTemperatureUnit(changes['default-temperature'].current);
       }
+      if (changes['default-distance']) {
+        console.log('🔍 DEBUG: default-distance flag changed:', changes['default-distance']);
+        setDistanceUnit(changes['default-distance'].current);
+      }
     };
     
     ldClient.on('change', handleFlagChange);
@@ -182,6 +187,14 @@ const WeatherWidget: React.FC = () => {
     if (ldClient) {
       const flagValue = ldClient.variation('default-temperature', 'c');
       setTemperatureUnit(flagValue);
+    }
+  }, [ldClient]);
+
+  // Initialize distance unit from LaunchDarkly flag
+  useEffect(() => {
+    if (ldClient) {
+      const flagValue = ldClient.variation('default-distance', 'km');
+      setDistanceUnit(flagValue);
     }
   }, [ldClient]);
 
@@ -214,6 +227,17 @@ const WeatherWidget: React.FC = () => {
       return `${convertCelsiusToFahrenheit(temperature)}°F`;
     }
     return `${temperature}°C`;
+  };
+
+  const convertKmhToMph = (kmh: number): number => {
+    return Math.round(kmh * 0.621371);
+  };
+
+  const formatWindSpeed = (windSpeed: number): string => {
+    if (distanceUnit === 'mi') {
+      return `${convertKmhToMph(windSpeed)} MPH`;
+    }
+    return `${windSpeed} KM/H`;
   };
 
   if (loading) {
@@ -316,7 +340,7 @@ SYSTEM ERROR: ${error}
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">WIND:</span>
-                  <span className="detail-value">{weather.windSpeed} KM/H</span>
+                  <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
                 </div>
               </div>
             )}
@@ -350,6 +374,8 @@ SYSTEM ERROR: ${error}
         onClose={handleCloseOptions} 
         temperatureUnit={temperatureUnit}
         onTemperatureUnitChange={setTemperatureUnit}
+        distanceUnit={distanceUnit}
+        onDistanceUnitChange={setDistanceUnit}
       />
       
       <APIErrorModal
