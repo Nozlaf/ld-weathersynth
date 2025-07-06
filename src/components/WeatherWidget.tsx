@@ -36,7 +36,7 @@ const WeatherWidget: React.FC = () => {
       console.log('🔍 DEBUG: fetchWeather called');
       setLoading(true);
       setError(null);
-      const weatherData = await getCurrentWeather();
+      const weatherData = await getCurrentWeather(ldClient);
       console.log('🔍 DEBUG: Weather data received:', weatherData);
       setWeather(weatherData);
       setLastUpdated(new Date());

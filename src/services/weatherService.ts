@@ -1,5 +1,6 @@
 import WeatherDebugService from './weatherDebugService';
 import locationSimulationService from './locationSimulationService';
+import { reIdentifyWithLocation } from './launchDarklyConfig';
 
 export interface WeatherData {
   temperature: number;
@@ -71,18 +72,25 @@ export const getCurrentLocation = (): Promise<Location> => {
   });
 };
 
-export const getWeatherData = async (location: Location): Promise<WeatherData> => {
+export const getWeatherData = async (location: Location, ldClient?: any): Promise<WeatherData> => {
   if (!OPENWEATHER_API_KEY) {
     // Return mock data if no API key is provided
     weatherDebug.updateRequestInfo('No API request (Mock Mode)', 'Mock Data', 0);
-    return {
+    const mockData = {
       temperature: 22,
       description: 'Sunny',
-      location: 'Demo City',
+      location: 'Demo City, XX',
       humidity: 65,
       windSpeed: 12,
       icon: '01d',
     };
+
+    // Re-identify with LaunchDarkly using the mock location context
+    if (ldClient && mockData.location) {
+      reIdentifyWithLocation(ldClient, mockData.location);
+    }
+
+    return mockData;
   }
 
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lon}&appid=${OPENWEATHER_API_KEY}&units=metric`;
@@ -117,6 +125,11 @@ export const getWeatherData = async (location: Location): Promise<WeatherData> =
       weatherDebug.getDebugInfo().location.fallbackUsed
     );
 
+    // Re-identify with LaunchDarkly using the location context
+    if (ldClient && weatherData.location) {
+      reIdentifyWithLocation(ldClient, weatherData.location);
+    }
+
     return weatherData;
   } catch (error) {
     console.error('Failed to fetch weather data:', error);
@@ -124,18 +137,25 @@ export const getWeatherData = async (location: Location): Promise<WeatherData> =
     weatherDebug.updateRequestInfo(apiUrl, `Error: ${error}`, responseTime);
     
     // Return fallback data
-    return {
+    const fallbackData = {
       temperature: 20,
       description: 'Unknown',
-      location: 'Unknown Location',
+      location: 'Unknown Location, XX',
       humidity: 50,
       windSpeed: 10,
       icon: '01d',
     };
+
+    // Re-identify with LaunchDarkly using the fallback location context
+    if (ldClient && fallbackData.location) {
+      reIdentifyWithLocation(ldClient, fallbackData.location);
+    }
+
+    return fallbackData;
   }
 };
 
-export const getCurrentWeather = async (): Promise<WeatherData> => {
+export const getCurrentWeather = async (ldClient?: any): Promise<WeatherData> => {
   const location = await getCurrentLocation();
-  return getWeatherData(location);
+  return getWeatherData(location, ldClient);
 }; 
