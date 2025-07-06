@@ -11,6 +11,12 @@ export interface WeatherData {
   icon: string;
 }
 
+export interface WeatherAPIError {
+  code: number;
+  message: string;
+  type: 'API_KEY_INVALID' | 'NETWORK_ERROR' | 'UNKNOWN_ERROR';
+}
+
 export interface Location {
   lat: number;
   lon: number;
@@ -102,7 +108,25 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
 
     if (!response.ok) {
       weatherDebug.updateRequestInfo(apiUrl, `HTTP ${response.status}`, responseTime);
-      throw new Error(`Weather API error: ${response.status}`);
+      
+      // Handle specific API errors
+      if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({ message: 'Invalid API key' }));
+        const apiError: WeatherAPIError = {
+          code: 401,
+          message: errorData.message || 'Invalid API key',
+          type: 'API_KEY_INVALID'
+        };
+        throw apiError;
+      }
+      
+      // Handle other HTTP errors
+      const genericError: WeatherAPIError = {
+        code: response.status,
+        message: `HTTP ${response.status}`,
+        type: 'NETWORK_ERROR'
+      };
+      throw genericError;
     }
 
     const data = await response.json();
@@ -136,22 +160,18 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
     const responseTime = Date.now() - startTime;
     weatherDebug.updateRequestInfo(apiUrl, `Error: ${error}`, responseTime);
     
-    // Return fallback data
-    const fallbackData = {
-      temperature: 20,
-      description: 'Unknown',
-      location: 'Unknown Location, XX',
-      humidity: 50,
-      windSpeed: 10,
-      icon: '01d',
-    };
-
-    // Re-identify with LaunchDarkly using the fallback location context
-    if (ldClient && fallbackData.location) {
-      reIdentifyWithLocation(ldClient, fallbackData.location);
+    // Re-throw WeatherAPIError objects to be handled by the component
+    if (error && typeof error === 'object' && 'type' in error) {
+      throw error as WeatherAPIError;
     }
-
-    return fallbackData;
+    
+    // For other errors, create a generic error object
+    const genericError: WeatherAPIError = {
+      code: 0,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      type: 'UNKNOWN_ERROR'
+    };
+    throw genericError;
   }
 };
 

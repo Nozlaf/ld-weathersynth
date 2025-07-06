@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { WeatherData, getCurrentWeather } from '../services/weatherService';
+import { WeatherData, getCurrentWeather, WeatherAPIError } from '../services/weatherService';
 import { useTheme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import moonPhaseService from '../services/moonPhaseService';
 import locationSimulationService from '../services/locationSimulationService';
 import WeatherDebugService from '../services/weatherDebugService';
 import OptionsModal from './OptionsModal';
+import APIErrorModal from './APIErrorModal';
 import './WeatherWidget.css';
 
 const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<WeatherAPIError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -36,6 +38,7 @@ const WeatherWidget: React.FC = () => {
       console.log('🔍 DEBUG: fetchWeather called');
       setLoading(true);
       setError(null);
+      setApiError(null);
       const weatherData = await getCurrentWeather(ldClient);
       console.log('🔍 DEBUG: Weather data received:', weatherData);
       setWeather(weatherData);
@@ -45,8 +48,35 @@ const WeatherWidget: React.FC = () => {
       await fetchMoonPhase();
     } catch (err) {
       console.error('🔍 DEBUG: fetchWeather error:', err);
-      setError('Failed to fetch weather data');
-      console.error('Weather fetch error:', err);
+      
+      // Handle WeatherAPIError objects
+      if (err && typeof err === 'object' && 'type' in err) {
+        const weatherError = err as WeatherAPIError;
+        console.log('🔍 DEBUG: WeatherAPIError detected:', weatherError);
+        
+        // For API key errors, show the modal
+        if (weatherError.type === 'API_KEY_INVALID') {
+          setApiError(weatherError);
+        } else {
+          setError(`API Error ${weatherError.code}: ${weatherError.message}`);
+        }
+        
+        // Provide fallback demo data
+        const fallbackData = {
+          temperature: 22,
+          description: 'Demo Weather',
+          location: 'Demo City, XX',
+          humidity: 65,
+          windSpeed: 12,
+          icon: '01d',
+        };
+        setWeather(fallbackData);
+        setLastUpdated(new Date());
+      } else {
+        // Handle generic errors
+        setError('Failed to fetch weather data');
+        console.error('Weather fetch error:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -58,6 +88,10 @@ const WeatherWidget: React.FC = () => {
 
   const handleCloseOptions = () => {
     setIsOptionsOpen(false);
+  };
+
+  const handleCloseApiError = () => {
+    setApiError(null);
   };
 
   // Get LaunchDarkly flags
@@ -316,6 +350,13 @@ SYSTEM ERROR: ${error}
         onClose={handleCloseOptions} 
         temperatureUnit={temperatureUnit}
         onTemperatureUnitChange={setTemperatureUnit}
+      />
+      
+      <APIErrorModal
+        isOpen={apiError !== null}
+        onClose={handleCloseApiError}
+        errorCode={apiError?.code}
+        errorMessage={apiError?.message}
       />
     </div>
   );
