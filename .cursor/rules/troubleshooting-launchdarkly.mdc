@@ -1,0 +1,16 @@
+---
+description: When debugging LaunchDarkly
+globs: 
+alwaysApply: false
+---
+LaunchDarkly Debugging suggestions
+
+- Recommend the developer add LaunchDarkly docs for their language of choice as a Cursor information source.
+
+- If a flag value isn’t what you expect, start by double-checking LaunchDarkly configuration.
+
+- Is your flag enabled in the LaunchDarkly dashboard?
+
+- Does the flag key in the dashboard match what is referenced in the code?
+
+- Does the LaunchDarkly SDK key referenced in code match the project and environment on our LaunchDarkly dashboard?

@@ -1,0 +1,619 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+/* CSS Custom Properties for themes */
+:root {
+  /* Dark Synth Pop theme (original dark theme) */
+  --dark-synth-bg-primary: #0f0f23;
+  --dark-synth-bg-secondary: #1a1a2e;
+  --dark-synth-bg-terminal: #0f0f23;
+  --dark-synth-text-primary: #f0f0f0;
+  --dark-synth-text-secondary: #ff00ff;
+  --dark-synth-text-accent: #00ffff;
+  --dark-synth-border: #ff00ff;
+  --dark-synth-glow: #ff00ff;
+
+  /* Dark Green CRT theme */
+  --dark-green-bg-primary: #001100;
+  --dark-green-bg-secondary: #002200;
+  --dark-green-bg-terminal: #001100;
+  --dark-green-text-primary: #00ff00;
+  --dark-green-text-secondary: #00cc00;
+  --dark-green-text-accent: #00ff88;
+  --dark-green-border: #00ff00;
+  --dark-green-glow: #00ff00;
+
+  /* Dark Orange Plasma theme */
+  --dark-orange-bg-primary: #1a0e00;
+  --dark-orange-bg-secondary: #2d1b00;
+  --dark-orange-bg-terminal: #1a0e00;
+  --dark-orange-text-primary: #ffaa00;
+  --dark-orange-text-secondary: #ff8800;
+  --dark-orange-text-accent: #ffcc44;
+  --dark-orange-border: #ff8800;
+  --dark-orange-glow: #ff8800;
+
+  /* Light theme (existing) */
+  --light-bg-primary: #f0f0e8;
+  --light-bg-secondary: #e8e8d8;
+  --light-bg-terminal: #f0f0e8;
+  --light-text-primary: #2e2e2e;
+  --light-text-secondary: #8b4513;
+  --light-text-accent: #4a4a8a;
+  --light-border: #8b4513;
+  --light-glow: #8b4513;
+
+  /* Grayscale theme */
+  --grayscale-bg-primary: #ffffff;
+  --grayscale-bg-secondary: #f5f5f5;
+  --grayscale-bg-terminal: #ffffff;
+  --grayscale-text-primary: #000000;
+  --grayscale-text-secondary: #666666;
+  --grayscale-text-accent: #333333;
+  --grayscale-border: #666666;
+  --grayscale-glow: #666666;
+}
+
+.weather-widget {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  transition: all 0.3s ease;
+  font-family: 'Courier Prime', monospace;
+}
+
+/* Dark Synth Pop theme */
+.weather-widget.dark-synth {
+  background: radial-gradient(circle at 50% 50%, var(--dark-synth-bg-secondary) 0%, var(--dark-synth-bg-primary) 100%);
+  color: var(--dark-synth-text-primary);
+}
+
+.weather-widget.dark-synth::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 0, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark Green CRT theme */
+.weather-widget.dark-green {
+  background: radial-gradient(circle at 50% 50%, var(--dark-green-bg-secondary) 0%, var(--dark-green-bg-primary) 100%);
+  color: var(--dark-green-text-primary);
+}
+
+.weather-widget.dark-green::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(0, 255, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(0, 204, 0, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark Orange Plasma theme */
+.weather-widget.dark-orange {
+  background: radial-gradient(circle at 50% 50%, var(--dark-orange-bg-secondary) 0%, var(--dark-orange-bg-primary) 100%);
+  color: var(--dark-orange-text-primary);
+}
+
+.weather-widget.dark-orange::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 136, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 204, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 170, 0, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Light theme */
+.weather-widget.light {
+  background: radial-gradient(circle at 50% 50%, var(--light-bg-secondary) 0%, var(--light-bg-primary) 100%);
+  color: var(--light-text-primary);
+}
+
+/* Grayscale theme */
+.weather-widget.grayscale {
+  background: radial-gradient(circle at 50% 50%, var(--grayscale-bg-secondary) 0%, var(--grayscale-bg-primary) 100%);
+  color: var(--grayscale-text-primary);
+}
+
+.terminal-frame {
+  background: var(--bg-terminal);
+  border: 3px solid var(--border);
+  border-radius: 15px;
+  min-width: 400px;
+  max-width: 500px;
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 
+    0 0 30px var(--glow),
+    inset 0 0 30px rgba(255, 0, 255, 0.1);
+  position: relative;
+  z-index: 2;
+}
+
+/* Dynamic CSS variables based on theme */
+.weather-widget.dark-synth {
+  --bg-primary: var(--dark-synth-bg-primary);
+  --bg-secondary: var(--dark-synth-bg-secondary);
+  --bg-terminal: var(--dark-synth-bg-terminal);
+  --text-primary: var(--dark-synth-text-primary);
+  --text-secondary: var(--dark-synth-text-secondary);
+  --text-accent: var(--dark-synth-text-accent);
+  --border: var(--dark-synth-border);
+  --glow: var(--dark-synth-glow);
+}
+
+.weather-widget.dark-green {
+  --bg-primary: var(--dark-green-bg-primary);
+  --bg-secondary: var(--dark-green-bg-secondary);
+  --bg-terminal: var(--dark-green-bg-terminal);
+  --text-primary: var(--dark-green-text-primary);
+  --text-secondary: var(--dark-green-text-secondary);
+  --text-accent: var(--dark-green-text-accent);
+  --border: var(--dark-green-border);
+  --glow: var(--dark-green-glow);
+}
+
+.weather-widget.dark-orange {
+  --bg-primary: var(--dark-orange-bg-primary);
+  --bg-secondary: var(--dark-orange-bg-secondary);
+  --bg-terminal: var(--dark-orange-bg-terminal);
+  --text-primary: var(--dark-orange-text-primary);
+  --text-secondary: var(--dark-orange-text-secondary);
+  --text-accent: var(--dark-orange-text-accent);
+  --border: var(--dark-orange-border);
+  --glow: var(--dark-orange-glow);
+}
+
+.weather-widget.light {
+  --bg-primary: var(--light-bg-primary);
+  --bg-secondary: var(--light-bg-secondary);
+  --bg-terminal: var(--light-bg-terminal);
+  --text-primary: var(--light-text-primary);
+  --text-secondary: var(--light-text-secondary);
+  --text-accent: var(--light-text-accent);
+  --border: var(--light-border);
+  --glow: var(--light-glow);
+}
+
+.weather-widget.grayscale {
+  --bg-primary: var(--grayscale-bg-primary);
+  --bg-secondary: var(--grayscale-bg-secondary);
+  --bg-terminal: var(--grayscale-bg-terminal);
+  --text-primary: var(--grayscale-text-primary);
+  --text-secondary: var(--grayscale-text-secondary);
+  --text-accent: var(--grayscale-text-accent);
+  --border: var(--grayscale-border);
+  --glow: var(--grayscale-glow);
+}
+
+/* Light theme specific overrides */
+.weather-widget.light .terminal-frame {
+  box-shadow: 
+    0 0 30px var(--glow),
+    inset 0 0 30px rgba(139, 69, 19, 0.1);
+}
+
+/* Grayscale theme specific overrides */
+.weather-widget.grayscale .terminal-frame {
+  box-shadow: 
+    0 0 30px var(--glow),
+    inset 0 0 30px rgba(102, 102, 102, 0.1);
+}
+
+.terminal-header {
+  background: linear-gradient(90deg, var(--border), var(--text-secondary));
+  padding: 12px 20px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: #000;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  letter-spacing: 2px;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.control-dot.red { background: #ff5f56; }
+.control-dot.yellow { background: #ffbd2e; }
+.control-dot.green { background: #27ca3f; }
+
+.terminal-content {
+  padding: 30px;
+  background: var(--bg-terminal);
+  border-radius: 0 0 12px 12px;
+  position: relative;
+}
+
+.weather-display {
+  text-align: center;
+}
+
+.weather-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.weather-icon {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 10px var(--glow));
+}
+
+/* Weather icon animation - only when animations are enabled */
+.weather-widget.animated .weather-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Theme-specific weather icon filters */
+.weather-widget.dark-green .weather-icon {
+  filter: sepia(1) hue-rotate(90deg) saturate(2) brightness(1.2) drop-shadow(0 0 10px var(--glow));
+}
+
+.weather-widget.dark-orange .weather-icon {
+  filter: sepia(1) hue-rotate(20deg) saturate(1.5) brightness(1.1) drop-shadow(0 0 10px var(--glow));
+}
+
+.weather-widget.grayscale .weather-icon {
+  filter: grayscale(1) contrast(1.2) brightness(0.8) drop-shadow(0 0 10px var(--glow));
+}
+
+.weather-temp {
+  font-family: 'Orbitron', monospace;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--text-accent);
+  text-shadow: 0 0 20px currentColor;
+  position: relative;
+}
+
+.weather-info {
+  margin: 25px 0;
+}
+
+.location {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.description {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.weather-details {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* Theme-specific weather details backgrounds */
+.weather-widget.dark-synth .weather-details {
+  background: rgba(255, 0, 255, 0.1);
+  border: 1px solid rgba(255, 0, 255, 0.3);
+}
+
+.weather-widget.dark-green .weather-details {
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.weather-widget.dark-orange .weather-details {
+  background: rgba(255, 136, 0, 0.1);
+  border: 1px solid rgba(255, 136, 0, 0.3);
+}
+
+.weather-widget.light .weather-details {
+  background: rgba(139, 69, 19, 0.1);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.weather-widget.grayscale .weather-details {
+  background: rgba(102, 102, 102, 0.1);
+  border: 1px solid rgba(102, 102, 102, 0.3);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.detail-value {
+  color: var(--text-primary);
+  font-family: 'Orbitron', monospace;
+}
+
+.terminal-footer {
+  margin-top: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  opacity: 0.7;
+  font-family: 'Courier Prime', monospace;
+}
+
+.refresh-button {
+  background: transparent;
+  border: 2px solid var(--text-secondary);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.refresh-button:hover {
+  background: var(--text-secondary);
+  color: var(--bg-terminal);
+  box-shadow: 0 0 15px var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Loading animation */
+.loading-animation {
+  text-align: center;
+}
+
+.ascii-art {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  margin: 20px 0;
+}
+
+.scan-line {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--text-primary), transparent);
+  animation: scan 2s linear infinite;
+}
+
+/* Error message */
+.error-message {
+  text-align: center;
+}
+
+.error-message pre {
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin: 20px 0;
+}
+
+/* CRT Effects for animations */
+.crt-effects {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.scan-lines {
+  height: 100%;
+  animation: scanlines 0.1s linear infinite;
+}
+
+/* Theme-specific scan lines */
+.weather-widget.dark-synth .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 0, 255, 0.1) 2px,
+    rgba(255, 0, 255, 0.1) 4px
+  );
+}
+
+.weather-widget.dark-green .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 0, 0.1) 2px,
+    rgba(0, 255, 0, 0.1) 4px
+  );
+}
+
+.weather-widget.dark-orange .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 136, 0, 0.1) 2px,
+    rgba(255, 136, 0, 0.1) 4px
+  );
+}
+
+.weather-widget.light .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(139, 69, 19, 0.1) 2px,
+    rgba(139, 69, 19, 0.1) 4px
+  );
+}
+
+.weather-widget.grayscale .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(102, 102, 102, 0.1) 2px,
+    rgba(102, 102, 102, 0.1) 4px
+  );
+}
+
+.screen-flicker {
+  background: var(--bg-terminal);
+  height: 100%;
+  opacity: 0;
+  animation: flicker 0.15s infinite linear alternate;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+@keyframes flicker {
+  0% { opacity: 0; }
+  98% { opacity: 0; }
+  100% { opacity: 0.02; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .weather-widget {
+    padding: 15px;
+  }
+  
+  .terminal-frame {
+    max-width: 100%;
+  }
+  
+  .terminal-content {
+    padding: 20px;
+  }
+  
+  .weather-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .weather-icon {
+    font-size: 3rem;
+  }
+  
+  .weather-temp {
+    font-size: 2.5rem;
+  }
+  
+  .location {
+    font-size: 1rem;
+  }
+  
+  .terminal-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .terminal-header {
+    padding: 10px 15px;
+  }
+  
+  .terminal-title {
+    font-size: 12px;
+  }
+  
+  .terminal-content {
+    padding: 15px;
+  }
+  
+  .weather-icon {
+    font-size: 2.5rem;
+  }
+  
+  .weather-temp {
+    font-size: 2rem;
+  }
+  
+  .location {
+    font-size: 0.9rem;
+  }
+  
+  .description {
+    font-size: 0.9rem;
+  }
+} 

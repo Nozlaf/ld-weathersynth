@@ -1,0 +1,79 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+implementing-launchdarkly.mdc:
+
+Rule 1: Use LaunchDarkly SDK Wrappers and Utility Functions
+
+- All applications must use shared SDK utility libraries or wrappers to standardize implementation.
+
+Wrappers must expose:
+
+- getLDConfig() – returns a pre-configured LDConfig object with environment-specific defaults
+
+- getSDKKey() – securely retrieves the SDK key for the environment
+
+- initializeLaunchDarkly() – performs singleton-safe client initialization with timeout handling
+
+- Wrappers must not fully abstract the core SDK. They should return SDK-native objects to allow flexibility and upgrades.
+
+Rule 2: LaunchDarkly Configuration Must Be Environment-Aware
+
+- SDK configuration wrappers must integrate with existing environment-specific configuration management systems (e.g., environment variables, secrets managers).
+
+If a proxy is required:
+
+- A shared function like defaultLaunchDarklyHTTPConfiguration() must parse and apply proxy settings from environment variables (e.g., http_proxy).
+
+- Configuration wrappers must allow consumers to override defaults without modifying shared code.
+
+
+Rule 3: LaunchDarkly Client Singleton Initialization Pattern
+
+- SDK must be initialized once, at application startup, using a singleton-safe pattern.
+
+Initialization must include:
+
+- A timeout (recommended: 1–5 seconds)
+
+- Metrics collection for latency/error tracking
+
+- Graceful fallback to default values if initialization fails
+
+- Example: use Promise.race() or equivalent to cap startup latency in async environments.
+
+
+Rule 4: LaunchDarkly Client Clean Shutdown Required
+
+- All applications must flush and close the SDK on shutdown.
+
+- Use shared setCleanupHandlers() utilities that hook into process signals (SIGINT, SIGTERM, etc.).
+
+
+Rule 5: LaunchDarkly Optional Enhancements
+
+Implement optional helpers for:
+
+- Bootstrapping flag values at startup
+
+- Subscribing to flag changes
+
+- Exporting metrics for initialization and flag evaluations
+
+Rule 6: LaunchDarkly SDK Config Must Be Lightweight and Reproducible
+
+- Config utilities must be easy to consume and adapt across environments and teams.
+
+The default configuration must support:
+
+- Proxy settings
+
+- Logging
+
+- Event buffer tuning
+
+- Relay proxy or daemon mode
+
+ 
