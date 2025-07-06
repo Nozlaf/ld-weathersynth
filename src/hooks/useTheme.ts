@@ -7,6 +7,7 @@ export interface ThemeContextType {
   toggleTheme: () => void;
   setThemeManually: (theme: Theme) => void;
   resetThemeToDefault: () => void;
+  trackThemeChangeOnClose: (previousTheme: Theme, newTheme: Theme, changeMethod: string) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

@@ -58,6 +58,28 @@ A beautiful, retro-styled weather application with a terminal aesthetic, inspire
 5. **Open your browser**
    Visit [http://localhost:3000](http://localhost:3000)
 
+## 🔄 Changelog
+
+### Version 1.1.0 - Latest Release
+
+**🎨 UI/UX Improvements**
+- **Dropdown Theme Selector**: Theme selection now uses a compact dropdown menu instead of individual buttons, making the options screen more manageable
+- **Improved Options Modal**: More space-efficient layout with better mobile responsiveness
+
+**📊 Analytics Enhancements**
+- **Smart Theme Tracking**: Theme change events are now only tracked when users close the options dialog after making changes, reducing analytical noise
+- **Intentional Change Detection**: Only committed theme changes are recorded, not temporary previews
+
+**🌡️ Unit Management**
+- **Temperature Units**: Added support for LaunchDarkly-controlled temperature units (Celsius/Fahrenheit)
+- **Distance Units**: Added support for LaunchDarkly-controlled distance units (Metric/Imperial)
+- **Flag Value Updates**: Distance unit flag now uses `"m"` (metric) and `"i"` (imperial) instead of `"km"` and `"mi"`
+
+**🔧 Technical Improvements**
+- **Enhanced Feature Flags**: Added `default-temperature` and `default-distance` flags for unit control
+- **Context Tracking**: Better LaunchDarkly context creation with location-based re-identification
+- **Performance Optimizations**: Improved flag change detection and state management
+
 ## 🎛️ LaunchDarkly Feature Flags
 
 This application uses LaunchDarkly for feature flag management. The following flags are available:
@@ -65,6 +87,8 @@ This application uses LaunchDarkly for feature flag management. The following fl
 | Flag Key | Type | Default | Description |
 |----------|------|---------|-------------|
 | `default-theme` | String | `"dark"` | Controls the app theme - see [Theme Values](#theme-values) below |
+| `default-temperature` | String | `"c"` | Default temperature unit: `"c"` for Celsius, `"f"` for Fahrenheit |
+| `default-distance` | String | `"m"` | Default distance unit: `"m"` for metric (km/h), `"i"` for imperial (mph) |
 | `weather-refresh-interval` | Number | `5` | Weather data refresh interval in **minutes** |
 | `enable-animations` | Boolean | `true` | Enables CRT effects, floating icons, and animations |
 | `show-extra-weather-info` | Boolean | `true` | Shows humidity and wind speed details |
@@ -140,7 +164,9 @@ The app uses OpenWeatherMap for weather data:
 
 ### 🎮 Interactive Elements
 - **Tap detection** - 10 taps in empty space opens SDK menu
-- **Options panel** - theme selection and debug panels
+- **Options panel** - dropdown theme selection, temperature/distance unit controls, and debug panels
+- **Dropdown interfaces** - compact theme selector with default theme indicators
+- **Unit controls** - toggle between Celsius/Fahrenheit and Metric/Imperial units
 - **Real-time updates** - automatic weather refresh every 5 minutes (configurable)
 - **Responsive design** - works on desktop, tablet, and mobile
 

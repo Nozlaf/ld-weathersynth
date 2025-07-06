@@ -127,16 +127,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const setThemeManually = (newTheme: Theme) => {
-    const previousTheme = theme;
     localStorage.setItem('weather-app-theme', newTheme);
     setTheme(newTheme);
-    
-    // Track theme change event
-    trackThemeChange(previousTheme, newTheme, 'manual');
   };
 
   const resetThemeToDefault = () => {
-    const previousTheme = theme;
     localStorage.removeItem('weather-app-theme');
     
     let newTheme: Theme;
@@ -148,13 +143,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       newTheme = 'dark-synth';
       setTheme(newTheme);
     }
-    
-    // Track theme change event
-    trackThemeChange(previousTheme, newTheme, 'reset_to_default');
+  };
+
+  // Function to track theme changes - called externally when options modal closes
+  const trackThemeChangeOnClose = (previousTheme: Theme, newTheme: Theme, changeMethod: string) => {
+    if (previousTheme !== newTheme) {
+      trackThemeChange(previousTheme, newTheme, changeMethod);
+    }
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeManually, resetThemeToDefault }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeManually, resetThemeToDefault, trackThemeChangeOnClose }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTheme, Theme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import './OptionsModal.css';
@@ -8,13 +8,47 @@ interface OptionsModalProps {
   onClose: () => void;
   temperatureUnit: 'c' | 'f';
   onTemperatureUnitChange: (unit: 'c' | 'f') => void;
-  distanceUnit: 'km' | 'mi';
-  onDistanceUnitChange: (unit: 'km' | 'mi') => void;
+  distanceUnit: 'm' | 'i';
+  onDistanceUnitChange: (unit: 'm' | 'i') => void;
 }
 
 const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatureUnit, onTemperatureUnitChange, distanceUnit, onDistanceUnitChange }) => {
-  const { theme, setThemeManually, resetThemeToDefault } = useTheme();
+  const { theme, setThemeManually, resetThemeToDefault, trackThemeChangeOnClose } = useTheme();
   const ldClient = useLDClient();
+  const [initialTheme, setInitialTheme] = useState<Theme | null>(null);
+  const [hasThemeChanged, setHasThemeChanged] = useState(false);
+  const wasResetUsed = useRef(false);
+
+  // Track when modal opens and set initial theme
+  useEffect(() => {
+    if (isOpen && !initialTheme) {
+      setInitialTheme(theme);
+      setHasThemeChanged(false);
+      wasResetUsed.current = false;
+    }
+  }, [isOpen, theme, initialTheme]);
+
+  // Track theme changes during modal session
+  useEffect(() => {
+    if (isOpen && initialTheme && theme !== initialTheme) {
+      setHasThemeChanged(true);
+    }
+  }, [theme, initialTheme, isOpen]);
+
+  // Handle modal close with theme tracking
+  const handleClose = () => {
+    if (hasThemeChanged && initialTheme) {
+      const changeMethod = wasResetUsed.current ? 'reset_to_default' : 'manual';
+      trackThemeChangeOnClose(initialTheme, theme, changeMethod);
+    }
+    
+    // Reset tracking state
+    setInitialTheme(null);
+    setHasThemeChanged(false);
+    wasResetUsed.current = false;
+    
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -54,12 +88,13 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
   };
 
   const handleResetToDefault = () => {
+    wasResetUsed.current = true;
     resetThemeToDefault();
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -101,29 +136,28 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
               
               <div className="theme-options">
                 <div className="theme-option">
-                  <span className="option-label">Current Theme:</span>
-                  <span className="option-value">{getThemeDisplayName(theme)}</span>
-                </div>
-                
-                <div className="theme-buttons">
-                  {themes.map((themeOption) => (
-                    <button 
-                      key={themeOption}
-                      className={`theme-button ${theme === themeOption ? 'active' : ''}`}
-                      onClick={() => handleThemeSelect(themeOption)}
+                  <span className="option-label">Theme Selection:</span>
+                  <div className="theme-controls">
+                    <select 
+                      className="theme-dropdown"
+                      value={theme}
+                      onChange={(e) => handleThemeSelect(e.target.value as Theme)}
                     >
-                      [ {getThemeDisplayName(themeOption).toUpperCase()} ]
-                      {themeOption === defaultTheme && (
-                        <span className="default-indicator"> ⚡ DEFAULT</span>
-                      )}
+                      {themes.map((themeOption) => (
+                        <option key={themeOption} value={themeOption}>
+                          {getThemeDisplayName(themeOption)}
+                          {themeOption === defaultTheme ? ' ⚡ DEFAULT' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button 
+                      className="theme-reset-button"
+                      onClick={handleResetToDefault}
+                      title="Reset to LaunchDarkly default theme"
+                    >
+                      [ RESET ]
                     </button>
-                  ))}
-                  <button 
-                    className="theme-button reset"
-                    onClick={handleResetToDefault}
-                  >
-                    [ RESET TO DEFAULT ]
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -174,19 +208,19 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
               <div className="distance-options">
                 <div className="distance-option">
                   <span className="option-label">Current Unit:</span>
-                  <span className="option-value">{distanceUnit === 'km' ? 'Kilometers (KM/H)' : 'Miles (MPH)'}</span>
+                  <span className="option-value">{distanceUnit === 'm' ? 'Kilometers (KM/H)' : 'Miles (MPH)'}</span>
                 </div>
                 
                 <div className="distance-buttons">
                   <button 
-                    className={`distance-button ${distanceUnit === 'km' ? 'active' : ''}`}
-                    onClick={() => onDistanceUnitChange('km')}
+                    className={`distance-button ${distanceUnit === 'm' ? 'active' : ''}`}
+                    onClick={() => onDistanceUnitChange('m')}
                   >
                     [ KILOMETERS (KM/H) ]
                   </button>
                   <button 
-                    className={`distance-button ${distanceUnit === 'mi' ? 'active' : ''}`}
-                    onClick={() => onDistanceUnitChange('mi')}
+                    className={`distance-button ${distanceUnit === 'i' ? 'active' : ''}`}
+                    onClick={() => onDistanceUnitChange('i')}
                   >
                     [ MILES (MPH) ]
                   </button>
@@ -195,7 +229,7 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
             </div>
             
             <div className="options-footer">
-              <button className="close-button" onClick={onClose}>
+              <button className="close-button" onClick={handleClose}>
                 [ CLOSE ]
               </button>
             </div>

@@ -18,7 +18,7 @@ const WeatherWidget: React.FC = () => {
   const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f'>('c');
-  const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('km');
+  const [distanceUnit, setDistanceUnit] = useState<'m' | 'i'>('m');
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
@@ -193,7 +193,7 @@ const WeatherWidget: React.FC = () => {
   // Initialize distance unit from LaunchDarkly flag
   useEffect(() => {
     if (ldClient) {
-      const flagValue = ldClient.variation('default-distance', 'km');
+      const flagValue = ldClient.variation('default-distance', 'm');
       setDistanceUnit(flagValue);
     }
   }, [ldClient]);
@@ -234,7 +234,7 @@ const WeatherWidget: React.FC = () => {
   };
 
   const formatWindSpeed = (windSpeed: number): string => {
-    if (distanceUnit === 'mi') {
+    if (distanceUnit === 'i') {
       return `${convertKmhToMph(windSpeed)} MPH`;
     }
     return `${windSpeed} KM/H`;
