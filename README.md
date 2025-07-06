@@ -321,6 +321,52 @@ npx serve -s build -l 3002
 - Safari 14+
 - Edge 90+
 
+## 🎵 Development Background
+
+This project was born from a **"vibe coding"** experiment to test and validate LaunchDarkly's **Cursor Rules** - a set of AI-powered development guidelines designed to help developers implement feature flags following best practices.
+
+### 🧠 The Experiment
+
+**What started as a simple weather app became a comprehensive showcase of:**
+- **LaunchDarkly best practices** - following the published Cursor rules for feature flag implementation
+- **AI-assisted development** - leveraging intelligent code suggestions and architectural guidance
+- **Rapid prototyping** - building production-ready features with AI pair programming
+- **Terminal aesthetics** - because retro vibes make everything better! 🌈
+
+### 🛠️ Development Stack
+
+**Built with the power of:**
+- **[Cursor](https://cursor.sh)** - The AI-powered code editor that made this rapid development possible
+- **[Claude-4-Sonnet](https://claude.ai)** - The AI agent that provided architectural guidance, code generation, and best practices
+- **LaunchDarkly Cursor Rules** - Structured guidelines for implementing feature flags correctly
+- **Retro inspiration** - 80s synthpop culture and CRT monitor aesthetics
+
+### 🎨 The "Vibe Coding" Approach
+
+Rather than traditional development, this project embraced:
+- **Aesthetic-first design** - letting the retro terminal theme drive technical decisions
+- **Feature flag everything** - using LaunchDarkly flags for every possible configuration
+- **AI pair programming** - collaborating with Claude-4-Sonnet for architecture and implementation
+- **Rapid iteration** - building features in real-time with immediate feedback
+
+### 📊 What This Proves
+
+**This weather app demonstrates:**
+- **LaunchDarkly Cursor Rules work** - following structured guidelines produces clean, maintainable code
+- **AI-assisted development is powerful** - complex features can be built rapidly without sacrificing quality
+- **Cursor + Claude-4-Sonnet = 🚀** - the combination enables incredibly productive development workflows
+- **Feature flags enable creativity** - when everything is configurable, experimentation becomes effortless
+
+### 🎯 Real-World Impact
+
+**The techniques used here apply to:**
+- **Production applications** - the architecture and patterns scale to enterprise systems
+- **Team development** - the LaunchDarkly rules provide consistency across developers
+- **Rapid prototyping** - AI assistance accelerates proof-of-concept development
+- **Feature experimentation** - flag-driven development enables safe, continuous iteration
+
+*This project serves as both a functional weather app and a testament to modern AI-assisted development practices. The retro aesthetic is just the cherry on top! 🍒*
+
 ## 📝 License
 
 This project is licensed under the MIT License.
