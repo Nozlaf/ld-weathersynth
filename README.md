@@ -2,6 +2,13 @@
 
 A beautiful, retro-styled weather application with a terminal aesthetic, inspired by 80s synthpop culture. Built with React, TypeScript, and LaunchDarkly for feature flag management.
 
+## 🌐 Live Demo
+
+🚀 **Check out the live sample site:** https://weather.imadethis.site
+
+*Note: The live demo may include experimental features not yet available in this GitHub repository, and may not be online 24/7.*
+
+
 ![Weather Synth Demo](https://img.shields.io/badge/Theme-80s%20Synthpop-ff00ff?style=for-the-badge)
 ![React](https://img.shields.io/badge/React-18.x-61dafb?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?style=for-the-badge&logo=typescript)
@@ -338,8 +345,8 @@ This project was born from a **"vibe coding"** experiment to test and validate L
 **Built with the power of:**
 - **[Cursor](https://cursor.sh)** - The AI-powered code editor that made this rapid development possible
 - **[Claude-4-Sonnet](https://claude.ai)** - The AI agent that provided architectural guidance, code generation, and best practices
-- **LaunchDarkly Cursor Rules** - Structured guidelines for implementing feature flags correctly
-- **Retro inspiration** - 80s synthpop culture and CRT monitor aesthetics
+- **[LaunchDarkly Cursor Rules](https://github.com/launchdarkly-labs/cursor-rules)** - Structured guidelines for implementing feature flags correctly
+- **Retro inspiration** - 80s synthpop culture and CRT monitor aesthetics (I was watching [Drive](https://www.youtube.com/watch?v=EatVh52p7S4&t=493s))
 
 ### 🎨 The "Vibe Coding" Approach
 
