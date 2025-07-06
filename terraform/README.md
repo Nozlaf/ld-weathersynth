@@ -1,210 +1,169 @@
-# LaunchDarkly Terraform Configuration
+# LaunchDarkly Terraform Configuration for Weather Synth App
 
-This directory contains Terraform configuration to set up the complete LaunchDarkly environment for the Weather Synth app.
+This Terraform configuration manages your existing LaunchDarkly project for the Weather Synth application. The configuration has been retrieved from your live LaunchDarkly instance and reflects the current state of your project.
+
+## 📋 Overview
+
+This Infrastructure-as-Code (IaC) setup manages:
+- **Project**: `weather-app` 
+- **Environments**: `test` and `production`
+- **Feature Flags**: 6 flags (excluding theme flags as requested)
+- **Metrics**: Custom theme-change metric
+- **Targeting Rules**: Current flag states and environment-specific configurations
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Terraform](https://terraform.io) installed (>= 1.0)
-- LaunchDarkly account with API access token
-- Project key: `weather-app`
+1. **Terraform**: Install Terraform >= 1.0
+2. **LaunchDarkly Access Token**: Your API token with appropriate permissions
+3. **LaunchDarkly Provider**: Will be automatically installed
 
 ### Setup
 
-1. **Copy the example variables file:**
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-
-2. **Update your LaunchDarkly API token:**
-   Edit `terraform.tfvars` and replace with your actual token:
-   ```hcl
-   launchdarkly_access_token = "your-actual-api-token-here"
-   ```
-
-3. **Initialize Terraform:**
-   ```bash
-   terraform init
-   ```
-
-4. **Plan the deployment:**
-   ```bash
-   terraform plan
-   ```
-
-5. **Apply the configuration:**
-   ```bash
-   terraform apply
-   ```
-
-6. **Get your client-side IDs:**
-   ```bash
-   terraform output client_side_id_production
-   terraform output client_side_id_development
-   ```
-
-## 🎛️ What Gets Created
-
-### Project Structure
-- **Project**: `weather-app` (Weather Synth App)
-- **Environments**: Production, Development, Staging
-- **Tags**: Organized with relevant tags for easy management
-
-### Feature Flags
-
-| Flag Key | Type | Default | Description |
-|----------|------|---------|-------------|
-| `default-theme` | String | `"dark"` | UI theme control with 6 theme options |
-| `default-temperature` | String | `"c"` | Temperature unit (Celsius/Fahrenheit) |
-| `default-distance` | String | `"m"` | Distance unit (Metric/Imperial) |
-| `weather-refresh-interval` | Number | `5` | Weather refresh interval (minutes) |
-| `enable-animations` | Boolean | `true` | CRT effects and animations toggle |
-| `show-extra-weather-info` | Boolean | `true` | Extra weather details toggle |
-| `debug-mode` | Boolean | `false` | Debug logging toggle |
-
-### Theme Variations
-The `default-theme` flag supports these values:
-- `"dark"` - Dark Synth (maps to dark-synth)
-- `"light"` - Clean light theme
-- `"dark-synth"` - Direct synthwave theme
-- `"dark-green"` - Matrix-style green
-- `"dark-orange"` - Amber terminal style
-- `"grayscale"` - Monochrome theme
-
-## 🔧 Configuration Details
-
-### Provider Configuration
-Uses the official LaunchDarkly Terraform provider:
-```hcl
-launchdarkly = {
-  source  = "launchdarkly/launchdarkly"
-  version = "~> 2.0"
-}
+1. **Clone and Navigate**:
+```bash
+cd weather-synth/terraform
 ```
 
-### Environment Setup
-Creates three environments with color coding:
-- **Production** (Green: #417505)
-- **Development** (Blue: #0969da)  
-- **Staging** (Orange: #bf8700)
+2. **Configure Variables**:
+```bash
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your API token
+```
 
-### Flag Organization
-Flags are tagged for easy filtering:
-- `ui`, `theme`, `visual` - UI-related flags
-- `units`, `localization` - Unit preferences
-- `performance`, `api` - Performance controls
-- `development`, `debug` - Development tools
+3. **Initialize and Apply**:
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+## 🏗️ Current Infrastructure
+
+### Project Configuration
+- **Key**: `weather-app`
+- **Name**: `weather-app`
+- **Tags**: None currently set
+
+### Environments
+
+| Environment | Key | Name | Color | Current State |
+|-------------|-----|------|-------|---------------|
+| Test | `test` | Test | `#EBFF38` (Yellow) | All flags OFF |
+| Production | `production` | Production | `#00DA7B` (Green) | All flags OFF |
+
+### Feature Flags (Retrieved from API)
+
+#### 1. Default Temperature (`default-temperature`)
+- **Type**: String (Multivariate)
+- **Description**: "should this be celcius or freedom units"
+- **Variations**: 
+  - `"c"` - Celsius
+  - `"f"` - Freedom units (Fahrenheit)  
+  - `"k"` - Kelvin (not used)
+- **Current State**: OFF in both environments
+- **Fallthrough**: Celsius (`"c"`)
+- **Off Variation**: Fahrenheit (`"f"`)
+
+#### 2. Default Distance (`default-distance`)
+- **Type**: String (Multivariate)
+- **Description**: "" (empty)
+- **Variations**:
+  - `"m"` - Metric (km/h)
+  - `"i"` - Freedom (mph)
+- **Current State**: OFF in both environments
+- **Fallthrough**: Metric (`"m"`)
+- **Off Variation**: Imperial (`"i"`)
+
+#### 3. Weather Refresh Interval (`weather-refresh-interval`)
+- **Type**: Number (Multivariate)
+- **Description**: "" (empty)
+- **Variations**:
+  - `5` - Five Minutes (Default)
+  - `60` - Hourly
+  - `30` - Half Hourly
+  - `720` - Half Day
+  - `1440` - daily
+- **Current State**: OFF in both environments
+- **Fallthrough**: 
+  - Production: 5 minutes
+  - Test: 720 minutes (Half Day)
+- **Off Variation**: 60 minutes (Hourly)
+
+#### 4. Enable Animations (`enable-animations`)
+- **Type**: Boolean
+- **Description**: "Enables Animations for CRT / Weather / Theme elements"
+- **Variations**:
+  - `true` - Enabled
+  - `false` - Disabled
+- **Current State**: OFF in both environments
+- **Fallthrough**: Enabled (`true`)
+- **Off Variation**: Disabled (`false`)
+
+#### 5. Show Extra Weather Info (`show-extra-weather-info`)
+- **Type**: Boolean
+- **Description**: "Show humidity and windspeed on the screen"
+- **Variations**:
+  - `true` - Extra Info
+  - `false` - Basic Info
+- **Current State**: OFF in both environments
+- **Fallthrough**: Extra Info (`true`)
+- **Off Variation**: Basic Info (`false`)
+
+#### 6. Debug Mode (`debug-mode`)
+- **Type**: Boolean
+- **Description**: "Enable debug logging in console"
+- **Variations**:
+  - `true` - Enabled
+  - `false` - Disabled
+- **Current State**: OFF in both environments
+- **Fallthrough**: Enabled (`true`)
+- **Off Variation**: Disabled (`false`)
 
 ### Client-Side SDK Configuration
-All feature flags are configured with `client_side_availability` enabled:
-- `using_environment_id = true` - Allows access via client-side ID
-- `using_mobile_key = true` - Enables mobile SDK compatibility
-- This ensures your React app can access all flags in real-time
 
-## 📋 Commands Reference
+All feature flags are configured with:
+- ✅ **Client-side availability enabled** (`using_environment_id: true`)
+- ❌ **Mobile key disabled** (`using_mobile_key: false`)
+- 🔄 **Temporary flags** (all set to `temporary: true`)
 
-### Essential Commands
+This allows your React application to access the flags using the client-side ID.
+
+### Metrics
+
+#### Custom Metrics
+- **theme-change**: Tracks theme change events (custom metric)
+
+#### LaunchDarkly Telemetry Metrics (Auto-generated)
+Your project also includes standard LaunchDarkly telemetry metrics for performance monitoring:
+- First Contentful Paint (FCP) metrics
+- Document Load Latency metrics  
+- Time to First Byte (TTFB) metrics
+- First Input Delay (FID) metrics
+- Largest Contentful Paint (LCP) metrics
+- Error rate tracking
+
+## 🎯 Usage Examples
+
+### Initialization
 ```bash
-# Initialize Terraform
 terraform init
+```
 
-# Format code
-terraform fmt
-
-# Validate configuration
-terraform validate
-
-# Plan changes
+### Preview Changes
+```bash
 terraform plan
+```
 
-# Apply changes
+### Apply Configuration
+```bash
 terraform apply
-
-# Show current state
-terraform show
-
-# List all resources
-terraform state list
-
-# Get outputs
-terraform output
 ```
 
-### Managing Individual Flags
+### Destroy Infrastructure (⚠️ Use with caution)
 ```bash
-# Target specific flag for changes
-terraform apply -target=launchdarkly_feature_flag.default_theme
-
-# Import existing flag
-terraform import launchdarkly_feature_flag.default_theme weather-app/default-theme
-
-# Remove flag (careful!)
-terraform destroy -target=launchdarkly_feature_flag.debug_mode
-```
-
-## 🔄 Updating Configuration
-
-### Adding New Flags
-1. Add the flag resource to `main.tf`
-2. Include appropriate variations and defaults
-3. Add to the outputs section
-4. Run `terraform apply`
-
-### Modifying Existing Flags
-1. Update the flag resource
-2. Plan to see changes: `terraform plan`
-3. Apply: `terraform apply`
-
-### Environment Management
-Environments are defined in the project resource. To add/modify:
-1. Update the `environments` block in `launchdarkly_project.weather_app`
-2. Apply changes with `terraform apply`
-
-## 🔒 Security Notes
-
-### Sensitive Data
-- API tokens are marked as `sensitive = true`
-- Client-side IDs are marked as sensitive outputs
-- Never commit `terraform.tfvars` with real tokens
-
-### Best Practices
-1. Use environment-specific tokens when possible
-2. Rotate API tokens regularly
-3. Use least-privilege access for tokens
-4. Store state file securely (consider remote state)
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**"Project already exists" error:**
-```bash
-# Import existing project
-terraform import launchdarkly_project.weather_app weather-app
-```
-
-**"Flag already exists" error:**
-```bash
-# Import existing flag
-terraform import launchdarkly_feature_flag.default_theme weather-app/default-theme
-```
-
-**Permission denied:**
-- Verify your API token has correct permissions
-- Check that token hasn't expired
-- Ensure project key matches
-
-### Useful Commands
-```bash
-# Debug Terraform execution
-TF_LOG=DEBUG terraform apply
-
-# Force refresh state
-terraform refresh
-
-# Check for drift
-terraform plan -detailed-exitcode
+terraform destroy
 ```
 
 ## 📁 File Structure
@@ -213,34 +172,128 @@ terraform plan -detailed-exitcode
 terraform/
 ├── main.tf                    # Main Terraform configuration
 ├── terraform.tfvars.example  # Example variables file
-├── README.md                 # This file
-└── terraform.tfvars         # Your actual variables (gitignored)
+├── .gitignore                # Git ignore for Terraform files
+├── deploy.sh                 # Deployment script
+└── README.md                 # This documentation
 ```
 
-## 🔗 Integration with Weather App
+## 🔧 Configuration Variables
 
-Once deployed, update your app's `.env` file:
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `launchdarkly_access_token` | Your LaunchDarkly API access token | - | ✅ |
+| `project_key` | LaunchDarkly project key | `"weather-app"` | ❌ |
+| `project_name` | LaunchDarkly project name | `"weather-app"` | ❌ |
+
+## 📤 Outputs
+
+After successful deployment, Terraform provides:
+
+| Output | Description |
+|--------|-------------|
+| `project_key` | The LaunchDarkly project key |
+| `client_side_id_production` | Client-side ID for Production environment |
+| `client_side_id_test` | Client-side ID for Test environment |
+| `feature_flags` | Map of all created feature flags |
+
+### Example Output
+```bash
+Outputs:
+
+client_side_id_production = "68zxxxxxx"
+client_side_id_test = "685xxxx"
+feature_flags = {
+  "debug_mode" = "debug-mode"
+  "default_distance" = "default-distance"
+  "default_temperature" = "default-temperature"
+  "enable_animations" = "enable-animations"
+  "show_extra_weather_info" = "show-extra-weather-info"
+  "weather_refresh_interval" = "weather-refresh-interval"
+}
+project_key = "weather-app"
+```
+
+## 🚨 Important Notes
+
+### Data Source
+This configuration was generated by:
+1. **API Retrieval**: Connected to your live LaunchDarkly instance
+2. **Current State Mapping**: Retrieved all project, environment, and flag configurations
+3. **Terraform Translation**: Converted live state to Infrastructure-as-Code
+
+### Excluded Configuration
+- **Theme flags**: Excluded as requested (`default-theme` flag not managed)
+- **LaunchDarkly Telemetry Metrics**: Auto-generated metrics are not managed by Terraform
+
+### Current State
+- **All flags are currently OFF** in both environments
+- **No custom targeting rules** are currently configured
+- **No user/context targeting** is currently set up
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### 1. Authentication Errors
+```bash
+Error: 401 Unauthorized
+```
+**Solution**: Verify your API token has correct permissions in `terraform.tfvars`
+
+#### 2. Resource Already Exists
+```bash
+Error: resource already exists
+```
+**Solution**: This is expected since we're importing existing resources. The configuration matches your current setup.
+
+#### 3. State Drift
+If Terraform detects changes between your configuration and live state:
+```bash
+terraform refresh
+terraform plan
+```
+
+### Getting Help
+
+1. **LaunchDarkly Documentation**: [docs.launchdarkly.com](https://docs.launchdarkly.com)
+2. **Terraform Provider**: [registry.terraform.io/providers/launchdarkly/launchdarkly](https://registry.terraform.io/providers/launchdarkly/launchdarkly)
+3. **LaunchDarkly Support**: Available through your LaunchDarkly account
+
+## 🔗 Integration with React App
+
+Your React application can use the client-side IDs generated by Terraform:
 
 ```bash
-# Use the client-side ID from terraform output
-REACT_APP_LAUNCHDARKLY_CLIENT_ID=your-client-side-id-from-terraform-output
+# Get the client-side IDs from Terraform output
+terraform output client_side_id_production
+terraform output client_side_id_test
 ```
 
-The app will automatically connect to these feature flags and respond to real-time changes!
+Example LaunchDarkly React SDK usage:
+```javascript
+import { withLDProvider } from 'launchdarkly-react-client-sdk';
 
-### 🔒 Client-Side SDK Requirements
+const App = () => {
+  // Your app code
+};
 
-**Important:** React apps use LaunchDarkly's client-side SDK, which requires special configuration:
+// Use environment variables to set the client-side ID
+export default withLDProvider({
+  clientSideID: process.env.REACT_APP_LAUNCHDARKLY_CLIENT_ID,
+  user: {
+    key: 'user-key',
+  },
+})(App);
+```
 
-1. **Client-Side Availability**: Feature flags must be explicitly marked as available for client-side SDKs
-2. **Environment ID**: Uses the client-side ID (not SDK key) for authentication
-3. **Real-Time Updates**: Client-side SDKs receive real-time flag changes via streaming
+## 📊 Next Steps
 
-This Terraform configuration automatically sets up all flags with the correct client-side availability settings, so your React app can access them immediately after deployment.
+1. **Review Configuration**: Ensure all flags match your expectations
+2. **Enable Flags**: Use LaunchDarkly UI or Terraform to enable flags as needed
+3. **Set Targeting Rules**: Configure user/context targeting through LaunchDarkly UI
+4. **Monitor Usage**: Use LaunchDarkly's analytics to track flag performance
+5. **Iterate**: Update this Terraform configuration as your feature flag strategy evolves
 
-## 📚 Additional Resources
+---
 
-- [LaunchDarkly Terraform Provider Documentation](https://registry.terraform.io/providers/launchdarkly/launchdarkly/latest/docs)
-- [Terraform Documentation](https://terraform.io/docs)
-- [LaunchDarkly API Documentation](https://apidocs.launchdarkly.com)
-- [Weather Synth App Repository](../README.md) 
+**Generated**: This configuration was automatically generated from your live LaunchDarkly instance on $(date) and reflects your current project state excluding theme-related configurations as requested. 

@@ -1,10 +1,13 @@
-# Example Terraform variables file for LaunchDarkly Weather Synth App
+# LaunchDarkly Configuration Variables
 # Copy this file to terraform.tfvars and update with your actual values
 
 # LaunchDarkly API Access Token
-# You can get this from LaunchDarkly Account Settings > Authorization
-launchdarkly_access_token = "api-8c0f8a1e-6ae0-4de8-8f88-8022cc0b210f"
+# Get this from: LaunchDarkly UI > Account Settings > Authorization > Personal Access Tokens
+launchdarkly_access_token = "your-api-token-here"
 
-# Optional: Override project settings
-# project_key = "weather-app"
-# project_name = "Weather Synth App" 
+# Project Configuration (matches your existing LaunchDarkly setup)
+project_key  = "weather-app"
+project_name = "weather-app"
+
+# Note: This configuration was generated from your existing LaunchDarkly instance
+# Replace "your-api-token-here" with your actual API token - keep it secure and never commit to version control 

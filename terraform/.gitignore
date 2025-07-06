@@ -32,4 +32,7 @@ override.tf.json
 
 # Ignore CLI configuration files
 .terraformrc
-terraform.rc 
+terraform.rc
+
+# Exclude configuration summary file (contains API tokens and sensitive data)
+CONFIGURATION_SUMMARY.md 

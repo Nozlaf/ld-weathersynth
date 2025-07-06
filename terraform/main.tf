@@ -1,5 +1,6 @@
 # LaunchDarkly Terraform Configuration for Weather Synth App
-# This configuration sets up the complete LaunchDarkly environment
+# This configuration matches your existing LaunchDarkly environment
+# Retrieved from API and updated to reflect current state
 
 terraform {
   required_providers {
@@ -32,7 +33,7 @@ variable "project_key" {
 variable "project_name" {
   description = "LaunchDarkly project name"
   type        = string
-  default     = "Weather Synth App"
+  default     = "weather-app"
 }
 
 # Create the LaunchDarkly Project
@@ -40,94 +41,30 @@ resource "launchdarkly_project" "weather_app" {
   key  = var.project_key
   name = var.project_name
   
-  tags = [
-    "weather",
-    "react",
-    "typescript", 
-    "demo",
-    "terraform"
-  ]
+  tags = []
+
+  environments {
+    key   = "test"
+    name  = "Test"
+    color = "EBFF38"
+    tags  = []
+  }
 
   environments {
     key   = "production"
     name  = "Production"
-    color = "417505"
-    tags  = ["prod"]
+    color = "00DA7B"
+    tags  = []
   }
-
-  environments {
-    key   = "development"
-    name  = "Development" 
-    color = "0969da"
-    tags  = ["dev"]
-  }
-
-  environments {
-    key   = "staging"
-    name  = "Staging"
-    color = "bf8700"
-    tags  = ["staging"]
-  }
-}
-
-# Theme Control Feature Flag
-resource "launchdarkly_feature_flag" "default_theme" {
-  project_key = launchdarkly_project.weather_app.key
-  key         = "default-theme"
-  name        = "Default Theme"
-  description = "Controls the default theme for the weather app UI"
-
-  variation_type = "string"
-  variations {
-    value       = "dark"
-    name        = "Dark Synth"
-    description = "Default dark synthwave theme"
-  }
-  variations {
-    value       = "light"
-    name        = "Light"
-    description = "Clean light theme"
-  }
-  variations {
-    value       = "dark-synth"
-    name        = "Dark Synth (Direct)"
-    description = "Direct dark synthwave theme"
-  }
-  variations {
-    value       = "dark-green"
-    name        = "Dark Green"
-    description = "Matrix-style green theme"
-  }
-  variations {
-    value       = "dark-orange"
-    name        = "Dark Orange"
-    description = "Amber terminal theme"
-  }
-  variations {
-    value       = "grayscale"
-    name        = "Grayscale"
-    description = "Monochrome theme"
-  }
-
-  defaults {
-    on_variation  = 0  # "dark"
-    off_variation = 0  # "dark"
-  }
-
-  client_side_availability {
-    using_environment_id = true
-    using_mobile_key     = true
-  }
-
-  tags = ["ui", "theme", "visual"]
 }
 
 # Temperature Unit Feature Flag
 resource "launchdarkly_feature_flag" "default_temperature" {
   project_key = launchdarkly_project.weather_app.key
   key         = "default-temperature"
-  name        = "Default Temperature Unit"
-  description = "Controls the default temperature unit display (Celsius or Fahrenheit)"
+  name        = "default-temperature"
+  description = "should this be celcius or freedom units"
+  temporary   = true
 
   variation_type = "string"
   variations {
@@ -137,29 +74,35 @@ resource "launchdarkly_feature_flag" "default_temperature" {
   }
   variations {
     value       = "f"
-    name        = "Fahrenheit"
+    name        = "Freedom units"
     description = "Display temperatures in Fahrenheit"
+  }
+  variations {
+    value       = "k"
+    name        = "Kelvin"
+    description = "Display temperatures in Kelvin"
   }
 
   defaults {
     on_variation  = 0  # "c" (Celsius)
-    off_variation = 0  # "c" (Celsius)
+    off_variation = 1  # "f" (Fahrenheit)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["units", "temperature", "localization"]
+  tags = []
 }
 
 # Distance Unit Feature Flag
 resource "launchdarkly_feature_flag" "default_distance" {
   project_key = launchdarkly_project.weather_app.key
   key         = "default-distance"
-  name        = "Default Distance Unit"
-  description = "Controls the default distance unit for wind speed (Metric or Imperial)"
+  name        = "default-distance"
+  description = ""
+  temporary   = true
 
   variation_type = "string"
   variations {
@@ -169,77 +112,84 @@ resource "launchdarkly_feature_flag" "default_distance" {
   }
   variations {
     value       = "i"
-    name        = "Imperial"
+    name        = "Freedom"
     description = "Display wind speed in mph"
   }
 
   defaults {
     on_variation  = 0  # "m" (Metric)
-    off_variation = 0  # "m" (Metric)
+    off_variation = 1  # "i" (Imperial)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["units", "distance", "localization"]
+  tags = []
 }
 
 # Weather Refresh Interval Feature Flag
 resource "launchdarkly_feature_flag" "weather_refresh_interval" {
   project_key = launchdarkly_project.weather_app.key
   key         = "weather-refresh-interval"
-  name        = "Weather Refresh Interval"
-  description = "Controls how often weather data is refreshed (in minutes)"
+  name        = "weather-refresh-interval"
+  description = ""
+  temporary   = true
 
   variation_type = "number"
   variations {
     value       = 5
-    name        = "5 Minutes"
+    name        = "Five Minutes (Default)"
     description = "Refresh every 5 minutes"
   }
   variations {
-    value       = 10
-    name        = "10 Minutes"
-    description = "Refresh every 10 minutes"
-  }
-  variations {
-    value       = 15
-    name        = "15 Minutes"
-    description = "Refresh every 15 minutes"
+    value       = 60
+    name        = "Hourly"
+    description = "Refresh every hour"
   }
   variations {
     value       = 30
-    name        = "30 Minutes"
+    name        = "Half Hourly"
     description = "Refresh every 30 minutes"
+  }
+  variations {
+    value       = 720
+    name        = "Half Day"
+    description = "Refresh every 12 hours"
+  }
+  variations {
+    value       = 1440
+    name        = "daily"
+    description = "Refresh daily"
   }
 
   defaults {
     on_variation  = 0  # 5 minutes
-    off_variation = 0  # 5 minutes
+    off_variation = 1  # 60 minutes (Hourly)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["performance", "api", "refresh"]
+  tags = []
 }
 
-# Animations Feature Flag
+# Enable Animations Feature Flag
 resource "launchdarkly_feature_flag" "enable_animations" {
   project_key = launchdarkly_project.weather_app.key
   key         = "enable-animations"
-  name        = "Enable Animations"
-  description = "Controls whether CRT effects, floating icons, and animations are enabled"
+  name        = "enable-animations"
+  description = "Enables Animations for CRT / Weather / Theme elements"
+  temporary   = true
 
   variation_type = "boolean"
   variations {
     value       = true
     name        = "Enabled"
-    description = "Show all animations and effects"
+    description = "Enable CRT and visual animations"
   }
   variations {
     value       = false
@@ -248,109 +198,242 @@ resource "launchdarkly_feature_flag" "enable_animations" {
   }
 
   defaults {
-    on_variation  = 0  # true (enabled)
-    off_variation = 1  # false (disabled)
+    on_variation  = 0  # true (Enabled)
+    off_variation = 1  # false (Disabled)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["ui", "performance", "animations", "accessibility"]
+  tags = []
 }
 
-# Extra Weather Info Feature Flag
+# Show Extra Weather Info Feature Flag
 resource "launchdarkly_feature_flag" "show_extra_weather_info" {
   project_key = launchdarkly_project.weather_app.key
   key         = "show-extra-weather-info"
-  name        = "Show Extra Weather Info"
-  description = "Controls whether additional weather details (humidity, wind speed) are displayed"
+  name        = "show-extra-weather-info"
+  description = "Show humidity and windspeed on the screen"
+  temporary   = true
 
   variation_type = "boolean"
   variations {
     value       = true
-    name        = "Show Details"
-    description = "Display humidity and wind speed"
+    name        = "Extra Info"
+    description = "Show additional weather details"
   }
   variations {
     value       = false
-    name        = "Hide Details"
-    description = "Show only basic temperature and conditions"
+    name        = "Basic Info"
+    description = "Show only basic weather information"
   }
 
   defaults {
-    on_variation  = 0  # true (show)
-    off_variation = 1  # false (hide)
+    on_variation  = 0  # true (Extra Info)
+    off_variation = 1  # false (Basic Info)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["ui", "weather", "details"]
+  tags = []
 }
 
 # Debug Mode Feature Flag
 resource "launchdarkly_feature_flag" "debug_mode" {
   project_key = launchdarkly_project.weather_app.key
   key         = "debug-mode"
-  name        = "Debug Mode"
-  description = "Enables debug console logging throughout the application"
+  name        = "debug-mode"
+  description = "Enable debug logging in console"
+  temporary   = true
 
   variation_type = "boolean"
   variations {
     value       = true
-    name        = "Debug On"
+    name        = "Enabled"
     description = "Enable debug logging"
   }
   variations {
     value       = false
-    name        = "Debug Off"
+    name        = "Disabled"
     description = "Disable debug logging"
   }
 
   defaults {
-    on_variation  = 1  # false (disabled)
-    off_variation = 1  # false (disabled)
+    on_variation  = 0  # true (Enabled)
+    off_variation = 1  # false (Disabled)
   }
 
   client_side_availability {
     using_environment_id = true
-    using_mobile_key     = true
+    using_mobile_key     = false
   }
 
-  tags = ["development", "logging", "debug"]
+  tags = []
 }
 
-# Output values
+# Environment-specific flag configurations to match current state
+# All flags are currently OFF in both environments
+
+# Production Environment Flag States
+resource "launchdarkly_feature_flag_environment" "default_temperature_production" {
+  flag_id      = launchdarkly_feature_flag.default_temperature.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # "c" (Celsius)
+  }
+  off_variation = 1  # "f" (Fahrenheit)
+}
+
+resource "launchdarkly_feature_flag_environment" "default_distance_production" {
+  flag_id      = launchdarkly_feature_flag.default_distance.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # "m" (Metric)
+  }
+  off_variation = 1  # "i" (Imperial)
+}
+
+resource "launchdarkly_feature_flag_environment" "weather_refresh_interval_production" {
+  flag_id      = launchdarkly_feature_flag.weather_refresh_interval.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # 5 minutes
+  }
+  off_variation = 1  # 60 minutes
+}
+
+resource "launchdarkly_feature_flag_environment" "enable_animations_production" {
+  flag_id      = launchdarkly_feature_flag.enable_animations.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
+resource "launchdarkly_feature_flag_environment" "show_extra_weather_info_production" {
+  flag_id      = launchdarkly_feature_flag.show_extra_weather_info.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Extra Info)
+  }
+  off_variation = 1  # false (Basic Info)
+}
+
+resource "launchdarkly_feature_flag_environment" "debug_mode_production" {
+  flag_id      = launchdarkly_feature_flag.debug_mode.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
+# Test Environment Flag States
+resource "launchdarkly_feature_flag_environment" "default_temperature_test" {
+  flag_id      = launchdarkly_feature_flag.default_temperature.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # "c" (Celsius)
+  }
+  off_variation = 1  # "f" (Fahrenheit)
+}
+
+resource "launchdarkly_feature_flag_environment" "default_distance_test" {
+  flag_id      = launchdarkly_feature_flag.default_distance.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # "m" (Metric)
+  }
+  off_variation = 1  # "i" (Imperial)
+}
+
+resource "launchdarkly_feature_flag_environment" "weather_refresh_interval_test" {
+  flag_id      = launchdarkly_feature_flag.weather_refresh_interval.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 3  # 720 minutes (Half Day) - matches current API state
+  }
+  off_variation = 1  # 60 minutes
+}
+
+resource "launchdarkly_feature_flag_environment" "enable_animations_test" {
+  flag_id      = launchdarkly_feature_flag.enable_animations.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
+resource "launchdarkly_feature_flag_environment" "show_extra_weather_info_test" {
+  flag_id      = launchdarkly_feature_flag.show_extra_weather_info.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Extra Info)
+  }
+  off_variation = 1  # false (Basic Info)
+}
+
+resource "launchdarkly_feature_flag_environment" "debug_mode_test" {
+  flag_id      = launchdarkly_feature_flag.debug_mode.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
+# Custom Metric for Theme Changes (based on existing metric)
+resource "launchdarkly_metric" "theme_change" {
+  project_key = launchdarkly_project.weather_app.key
+  key         = "theme-change"
+  name        = "theme-change"
+  kind        = "custom"
+  description = "Tracks theme change events"
+}
+
+# Outputs
 output "project_key" {
   description = "The LaunchDarkly project key"
   value       = launchdarkly_project.weather_app.key
 }
 
 output "client_side_id_production" {
-  description = "Production environment client-side ID"
-  value       = launchdarkly_project.weather_app.environments[0].client_side_id
-  sensitive   = true
+  description = "Client-side ID for Production environment"
+  value       = launchdarkly_project.weather_app.environments.production.client_side_id
 }
 
-output "client_side_id_development" {
-  description = "Development environment client-side ID"
-  value       = launchdarkly_project.weather_app.environments[1].client_side_id
-  sensitive   = true
+output "client_side_id_test" {
+  description = "Client-side ID for Test environment"
+  value       = launchdarkly_project.weather_app.environments.test.client_side_id
 }
 
 output "feature_flags" {
-  description = "List of created feature flags"
+  description = "Created feature flags"
   value = {
-    theme       = launchdarkly_feature_flag.default_theme.key
-    temperature = launchdarkly_feature_flag.default_temperature.key
-    distance    = launchdarkly_feature_flag.default_distance.key
-    refresh     = launchdarkly_feature_flag.weather_refresh_interval.key
-    animations  = launchdarkly_feature_flag.enable_animations.key
-    extra_info  = launchdarkly_feature_flag.show_extra_weather_info.key
-    debug       = launchdarkly_feature_flag.debug_mode.key
+    default_temperature      = launchdarkly_feature_flag.default_temperature.key
+    default_distance        = launchdarkly_feature_flag.default_distance.key
+    weather_refresh_interval = launchdarkly_feature_flag.weather_refresh_interval.key
+    enable_animations       = launchdarkly_feature_flag.enable_animations.key
+    show_extra_weather_info = launchdarkly_feature_flag.show_extra_weather_info.key
+    debug_mode             = launchdarkly_feature_flag.debug_mode.key
   }
 } 
