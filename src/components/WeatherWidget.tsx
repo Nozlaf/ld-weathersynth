@@ -15,6 +15,7 @@ const WeatherWidget: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f'>('c');
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
@@ -129,6 +130,10 @@ const WeatherWidget: React.FC = () => {
         console.log('🔍 DEBUG: show-extra-weather-info flag changed:', changes['show-extra-weather-info']);
         // Component will automatically re-render and pick up the new flag value
       }
+      if (changes['default-temperature']) {
+        console.log('🔍 DEBUG: default-temperature flag changed:', changes['default-temperature']);
+        setTemperatureUnit(changes['default-temperature'].current);
+      }
     };
     
     ldClient.on('change', handleFlagChange);
@@ -136,6 +141,14 @@ const WeatherWidget: React.FC = () => {
     return () => {
       ldClient.off('change', handleFlagChange);
     };
+  }, [ldClient]);
+
+  // Initialize temperature unit from LaunchDarkly flag
+  useEffect(() => {
+    if (ldClient) {
+      const flagValue = ldClient.variation('default-temperature', 'c');
+      setTemperatureUnit(flagValue);
+    }
   }, [ldClient]);
 
   const getWeatherIcon = (iconCode: string) => {
@@ -156,6 +169,17 @@ const WeatherWidget: React.FC = () => {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const convertCelsiusToFahrenheit = (celsius: number): number => {
+    return Math.round((celsius * 9/5) + 32);
+  };
+
+  const formatTemperature = (temperature: number): string => {
+    if (temperatureUnit === 'f') {
+      return `${convertCelsiusToFahrenheit(temperature)}°F`;
+    }
+    return `${temperature}°C`;
   };
 
   if (loading) {
@@ -242,7 +266,7 @@ SYSTEM ERROR: ${error}
           <div className="weather-display">
             <div className="weather-header">
               <div className="weather-icon">{getWeatherIcon(weather.icon)}</div>
-              <div className="weather-temp">{weather.temperature}°C</div>
+              <div className="weather-temp">{formatTemperature(weather.temperature)}</div>
             </div>
             
             <div className="weather-info">
@@ -290,6 +314,8 @@ SYSTEM ERROR: ${error}
       <OptionsModal 
         isOpen={isOptionsOpen} 
         onClose={handleCloseOptions} 
+        temperatureUnit={temperatureUnit}
+        onTemperatureUnitChange={setTemperatureUnit}
       />
     </div>
   );

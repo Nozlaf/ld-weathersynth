@@ -6,9 +6,11 @@ import './OptionsModal.css';
 interface OptionsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  temperatureUnit: 'c' | 'f';
+  onTemperatureUnitChange: (unit: 'c' | 'f') => void;
 }
 
-const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose }) => {
+const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatureUnit, onTemperatureUnitChange }) => {
   const { theme, setThemeManually, resetThemeToDefault } = useTheme();
   const ldClient = useLDClient();
 
@@ -119,6 +121,39 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose }) => {
                     onClick={handleResetToDefault}
                   >
                     [ RESET TO DEFAULT ]
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="options-section">
+              <div className="options-subtitle">
+                <pre>
+{`
+▀█▀ █▀▀ █▀▄▀█ █▀█ █▀▀ █▀█ ▄▀█ ▀█▀ █░█ █▀█ █▀▀   █░█ █▄░█ █ ▀█▀ █▀
+░█░ ██▄ █░▀░█ █▀▀ ██▄ █▀▄ █▀█ ░█░ █▄█ █▀▄ ██▄   █▄█ █░▀█ █ ░█░ ▄█
+`}
+                </pre>
+              </div>
+              
+              <div className="temperature-options">
+                <div className="temperature-option">
+                  <span className="option-label">Current Unit:</span>
+                  <span className="option-value">{temperatureUnit === 'c' ? 'Celsius (°C)' : 'Fahrenheit (°F)'}</span>
+                </div>
+                
+                <div className="temperature-buttons">
+                  <button 
+                    className={`temperature-button ${temperatureUnit === 'c' ? 'active' : ''}`}
+                    onClick={() => onTemperatureUnitChange('c')}
+                  >
+                    [ CELSIUS (°C) ]
+                  </button>
+                  <button 
+                    className={`temperature-button ${temperatureUnit === 'f' ? 'active' : ''}`}
+                    onClick={() => onTemperatureUnitChange('f')}
+                  >
+                    [ FAHRENHEIT (°F) ]
                   </button>
                 </div>
               </div>

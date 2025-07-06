@@ -255,6 +255,72 @@
   50% { opacity: 0.6; }
 }
 
+/* Temperature Options */
+.options-subtitle {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.options-subtitle pre {
+  color: var(--modal-text-secondary);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  margin: 0;
+  text-shadow: 0 0 10px var(--modal-text-secondary);
+}
+
+.temperature-options {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.temperature-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--modal-text-secondary);
+  opacity: 0.7;
+}
+
+.temperature-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.temperature-button {
+  background: transparent;
+  border: 2px solid var(--modal-text-secondary);
+  color: var(--modal-text-secondary);
+  padding: 12px 20px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.temperature-button:hover {
+  background: var(--modal-text-secondary);
+  color: var(--modal-bg);
+  box-shadow: 0 0 15px var(--modal-text-secondary);
+  transform: translateY(-2px);
+}
+
+.temperature-button.active {
+  background: var(--modal-text-accent);
+  border-color: var(--modal-text-accent);
+  color: var(--modal-bg);
+  box-shadow: 0 0 20px var(--modal-text-accent);
+}
+
 .options-footer {
   display: flex;
   justify-content: center;
@@ -388,6 +454,15 @@
   }
   
   .theme-button {
+    padding: 10px 16px;
+    font-size: 0.7rem;
+  }
+  
+  .temperature-buttons {
+    gap: 10px;
+  }
+  
+  .temperature-button {
     padding: 10px 16px;
     font-size: 0.7rem;
   }
