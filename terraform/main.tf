@@ -114,6 +114,11 @@ resource "launchdarkly_feature_flag" "default_theme" {
     off_variation = 0  # "dark"
   }
 
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
+  }
+
   tags = ["ui", "theme", "visual"]
 }
 
@@ -141,6 +146,11 @@ resource "launchdarkly_feature_flag" "default_temperature" {
     off_variation = 0  # "c" (Celsius)
   }
 
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
+  }
+
   tags = ["units", "temperature", "localization"]
 }
 
@@ -166,6 +176,11 @@ resource "launchdarkly_feature_flag" "default_distance" {
   defaults {
     on_variation  = 0  # "m" (Metric)
     off_variation = 0  # "m" (Metric)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
   }
 
   tags = ["units", "distance", "localization"]
@@ -205,6 +220,11 @@ resource "launchdarkly_feature_flag" "weather_refresh_interval" {
     off_variation = 0  # 5 minutes
   }
 
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
+  }
+
   tags = ["performance", "api", "refresh"]
 }
 
@@ -230,6 +250,11 @@ resource "launchdarkly_feature_flag" "enable_animations" {
   defaults {
     on_variation  = 0  # true (enabled)
     off_variation = 1  # false (disabled)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
   }
 
   tags = ["ui", "performance", "animations", "accessibility"]
@@ -259,6 +284,11 @@ resource "launchdarkly_feature_flag" "show_extra_weather_info" {
     off_variation = 1  # false (hide)
   }
 
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
+  }
+
   tags = ["ui", "weather", "details"]
 }
 
@@ -284,6 +314,11 @@ resource "launchdarkly_feature_flag" "debug_mode" {
   defaults {
     on_variation  = 1  # false (disabled)
     off_variation = 1  # false (disabled)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = true
   }
 
   tags = ["development", "logging", "debug"]

@@ -96,6 +96,12 @@ Flags are tagged for easy filtering:
 - `performance`, `api` - Performance controls
 - `development`, `debug` - Development tools
 
+### Client-Side SDK Configuration
+All feature flags are configured with `client_side_availability` enabled:
+- `using_environment_id = true` - Allows access via client-side ID
+- `using_mobile_key = true` - Enables mobile SDK compatibility
+- This ensures your React app can access all flags in real-time
+
 ## 📋 Commands Reference
 
 ### Essential Commands
@@ -221,6 +227,16 @@ REACT_APP_LAUNCHDARKLY_CLIENT_ID=your-client-side-id-from-terraform-output
 ```
 
 The app will automatically connect to these feature flags and respond to real-time changes!
+
+### 🔒 Client-Side SDK Requirements
+
+**Important:** React apps use LaunchDarkly's client-side SDK, which requires special configuration:
+
+1. **Client-Side Availability**: Feature flags must be explicitly marked as available for client-side SDKs
+2. **Environment ID**: Uses the client-side ID (not SDK key) for authentication
+3. **Real-Time Updates**: Client-side SDKs receive real-time flag changes via streaming
+
+This Terraform configuration automatically sets up all flags with the correct client-side availability settings, so your React app can access them immediately after deployment.
 
 ## 📚 Additional Resources
 
