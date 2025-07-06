@@ -17,7 +17,13 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
   const ldClient = useLDClient();
   const [initialTheme, setInitialTheme] = useState<Theme | null>(null);
   const [hasThemeChanged, setHasThemeChanged] = useState(false);
+  const [shouldThrowError, setShouldThrowError] = useState(false);
   const wasResetUsed = useRef(false);
+
+  // Throw error during render if triggered
+  if (shouldThrowError) {
+    throw new Error('Test error from options modal - LaunchDarkly error tracking test');
+  }
 
   // Track when modal opens and set initial theme
   useEffect(() => {
@@ -224,6 +230,37 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
                   >
                     [ MILES (MPH) ]
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="options-section">
+              <div className="options-subtitle">
+                <pre>
+{`
+▀█▀ █▀▀ █▀ ▀█▀   █▀▀ █▀█ █▀█ █▀█ █▀█
+░█░ ██▄ ▄█ ░█░   ██▄ █▀▄ █▀▄ █▄█ █▀▄
+`}
+                </pre>
+              </div>
+              
+              <div className="error-testing">
+                <div className="error-option">
+                  <span className="option-label">Error Boundary Testing:</span>
+                  <span className="option-value">Test LaunchDarkly error tracking</span>
+                </div>
+                
+                <div className="error-button-container">
+                  <button 
+                    className="error-test-button"
+                    onClick={() => setShouldThrowError(true)}
+                    title="Trigger a test error to validate error boundary and LaunchDarkly error tracking"
+                  >
+                    [ TRIGGER TEST ERROR ]
+                  </button>
+                  <p className="error-warning">
+                    ⚠️ This will crash the app and show the error boundary screen
+                  </p>
                 </div>
               </div>
             </div>
