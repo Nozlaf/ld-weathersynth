@@ -6,6 +6,7 @@ A beautiful, retro-styled weather application with a terminal aesthetic, inspire
 ![React](https://img.shields.io/badge/React-18.x-61dafb?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-4.x-3178c6?style=for-the-badge&logo=typescript)
 ![LaunchDarkly](https://img.shields.io/badge/LaunchDarkly-Feature%20Flags-00d4aa?style=for-the-badge)
+![LaunchDarkly Observability](https://img.shields.io/badge/LaunchDarkly-Observability-405cf5?style=for-the-badge)
 
 ## ✨ Features
 
