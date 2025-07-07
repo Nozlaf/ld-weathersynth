@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
-    "serve": "^14.2.4",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "serve": "^14.2.4"
   }
 }

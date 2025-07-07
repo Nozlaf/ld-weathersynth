@@ -16,8 +16,9 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https://clientstream.launchdarkly.com", "https://events.launchdarkly.com", "https://api.farmsense.net", "https://observability.app.launchdarkly.com", "https://pub.observability.app.launchdarkly.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com"],
+      connectSrc: ["'self'", "https://clientstream.launchdarkly.com", "https://events.launchdarkly.com", "https://app.launchdarkly.com", "https://api.farmsense.net", "https://observability.app.launchdarkly.com", "https://pub.observability.app.launchdarkly.com", "https://otel.observability.app.launchdarkly.com", "https://www.google-analytics.com"],
+      workerSrc: ["'self'", "blob:"],
     },
   },
 }));
