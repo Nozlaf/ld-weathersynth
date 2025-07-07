@@ -203,20 +203,20 @@
   z-index: 1;
   background-image: 
     /* Layer 1 - Fast falling petals */
-    radial-gradient(2px 2px at 20px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
-    radial-gradient(2px 2px at 40px 70px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
-    radial-gradient(1px 1px at 90px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
-    radial-gradient(1px 1px at 130px 80px, rgba(236, 72, 153, 0.6) 50%, transparent 51%),
-    radial-gradient(2px 2px at 160px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    radial-gradient(4px 4px at 20px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    radial-gradient(5px 5px at 40px 70px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
+    radial-gradient(3px 3px at 90px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    radial-gradient(4px 4px at 130px 80px, rgba(236, 72, 153, 0.6) 50%, transparent 51%),
+    radial-gradient(5px 5px at 160px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
     /* Layer 2 - Medium speed petals */
-    radial-gradient(1px 1px at 200px 50px, rgba(236, 72, 153, 0.7) 50%, transparent 51%),
-    radial-gradient(2px 2px at 250px 20px, rgba(244, 114, 182, 0.5) 50%, transparent 51%),
-    radial-gradient(1px 1px at 300px 60px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
-    radial-gradient(2px 2px at 350px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    radial-gradient(3px 3px at 200px 50px, rgba(236, 72, 153, 0.7) 50%, transparent 51%),
+    radial-gradient(4px 4px at 250px 20px, rgba(244, 114, 182, 0.5) 50%, transparent 51%),
+    radial-gradient(3px 3px at 300px 60px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
+    radial-gradient(5px 5px at 350px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
     /* Layer 3 - Slow floating petals */
-    radial-gradient(1px 1px at 400px 30px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
-    radial-gradient(2px 2px at 450px 70px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
-    radial-gradient(1px 1px at 500px 50px, rgba(236, 72, 153, 0.5) 50%, transparent 51%);
+    radial-gradient(3px 3px at 400px 30px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
+    radial-gradient(4px 4px at 450px 70px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
+    radial-gradient(3px 3px at 500px 50px, rgba(236, 72, 153, 0.5) 50%, transparent 51%);
   background-repeat: repeat;
   background-size: 200px 200px, 300px 300px, 180px 180px, 250px 250px, 220px 220px,
                    280px 280px, 240px 240px, 200px 200px, 260px 260px,
@@ -236,12 +236,12 @@
   z-index: 1;
   background-image:
     /* Different layer with offset timing */
-    radial-gradient(1px 1px at 60px 20px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
-    radial-gradient(2px 2px at 120px 60px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
-    radial-gradient(1px 1px at 180px 40px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
-    radial-gradient(2px 2px at 240px 80px, rgba(236, 72, 153, 0.5) 50%, transparent 51%),
-    radial-gradient(1px 1px at 320px 10px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
-    radial-gradient(2px 2px at 380px 50px, rgba(236, 72, 153, 0.6) 50%, transparent 51%);
+    radial-gradient(3px 3px at 60px 20px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    radial-gradient(5px 5px at 120px 60px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
+    radial-gradient(4px 4px at 180px 40px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
+    radial-gradient(4px 4px at 240px 80px, rgba(236, 72, 153, 0.5) 50%, transparent 51%),
+    radial-gradient(3px 3px at 320px 10px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    radial-gradient(5px 5px at 380px 50px, rgba(236, 72, 153, 0.6) 50%, transparent 51%);
   background-repeat: repeat;
   background-size: 150px 150px, 200px 200px, 180px 180px, 220px 220px, 160px 160px, 240px 240px;
   animation: sakura-fall-2 25s linear infinite, sakura-sway-2 6s ease-in-out infinite alternate;
