@@ -101,7 +101,6 @@ This application uses LaunchDarkly for feature flag management. The following fl
 | `enable-animations` | Boolean | `true` | Enables CRT effects, floating icons, and animations |
 | `show-extra-weather-info` | Boolean | `true` | Shows humidity and wind speed details |
 | `debug-mode` | Boolean | `false` | Enables debug console logging throughout the app |
-| `enable-sakura-theme` | Boolean | `false` | Enables the Sakura theme with animated petals in theme selector |
 
 ### Theme Values
 
@@ -116,7 +115,7 @@ The `default-theme` flag accepts the following values:
 | `"dark-orange"` | **Dark Orange** | Amber terminal style |
 | `"grayscale"` | **Grayscale** | Monochrome terminal aesthetic |
 | `"dark-grayscale"` | **Dark Grayscale** | Dark monochrome with light and dark grey elements |
-| `"sakura"` | **Sakura** | Retro-futuristic with animated petals |
+| `"sakura"` | **Sakura Blossom** | Retro-futuristic with animated falling cherry blossom petals |
 
 **Note:** The app also supports manual theme selection via the Options panel, which overrides the LaunchDarkly flag.
 
@@ -245,7 +244,6 @@ The app uses OpenWeatherMap for weather data:
 - Background: Soft pink gradients (#fdf2f8, #fce7f3)
 - Style: Retro-futuristic with animated falling cherry blossom petals
 - Special Feature: Animated sakura petals continuously fall in the background
-- Availability: Controlled by `enable-sakura-theme` feature flag
 
 ### Typography
 

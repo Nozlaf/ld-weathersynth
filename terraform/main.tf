@@ -102,6 +102,11 @@ resource "launchdarkly_feature_flag" "default_theme" {
     name        = "Dark Grayscale"
     description = "Dark monochrome with light and dark grey elements"
   }
+  variations {
+    value       = "sakura"
+    name        = "Sakura Blossom"
+    description = "Retro-futuristic with animated falling cherry blossom petals"
+  }
 
   defaults {
     on_variation  = 0  # "dark" (maps to dark-synth)
