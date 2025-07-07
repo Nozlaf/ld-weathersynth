@@ -191,23 +191,60 @@
   z-index: 1;
 }
 
-/* Animated Sakura petals */
+/* Animated Sakura petals - Multiple layers for realistic effect */
 .weather-widget.sakura::after {
-  content: '🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸';
+  content: '';
   position: absolute;
-  top: -100px;
+  top: 0;
   left: 0;
   right: 0;
-  height: calc(100% + 200px);
-  font-size: 20px;
-  line-height: 100px;
-  opacity: 0.6;
-  animation: sakura-petals 25s linear infinite;
+  bottom: 0;
   pointer-events: none;
   z-index: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  transform: translateZ(0);
+  background-image: 
+    /* Layer 1 - Fast falling petals */
+    radial-gradient(2px 2px at 20px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 40px 70px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 130px 80px, rgba(236, 72, 153, 0.6) 50%, transparent 51%),
+    radial-gradient(2px 2px at 160px 30px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    /* Layer 2 - Medium speed petals */
+    radial-gradient(1px 1px at 200px 50px, rgba(236, 72, 153, 0.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 250px 20px, rgba(244, 114, 182, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 300px 60px, rgba(236, 72, 153, 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 350px 40px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    /* Layer 3 - Slow floating petals */
+    radial-gradient(1px 1px at 400px 30px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
+    radial-gradient(2px 2px at 450px 70px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 500px 50px, rgba(236, 72, 153, 0.5) 50%, transparent 51%);
+  background-repeat: repeat;
+  background-size: 200px 200px, 300px 300px, 180px 180px, 250px 250px, 220px 220px,
+                   280px 280px, 240px 240px, 200px 200px, 260px 260px,
+                   320px 320px, 180px 180px, 300px 300px;
+  animation: sakura-fall-1 20s linear infinite, sakura-sway 8s ease-in-out infinite alternate;
+}
+
+/* Additional petal layers using before pseudo-element */
+.weather-widget.sakura::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    /* Different layer with offset timing */
+    radial-gradient(1px 1px at 60px 20px, rgba(244, 114, 182, 0.6) 50%, transparent 51%),
+    radial-gradient(2px 2px at 120px 60px, rgba(236, 72, 153, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 180px 40px, rgba(244, 114, 182, 0.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 240px 80px, rgba(236, 72, 153, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 320px 10px, rgba(244, 114, 182, 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 380px 50px, rgba(236, 72, 153, 0.6) 50%, transparent 51%);
+  background-repeat: repeat;
+  background-size: 150px 150px, 200px 200px, 180px 180px, 220px 220px, 160px 160px, 240px 240px;
+  animation: sakura-fall-2 25s linear infinite, sakura-sway-2 6s ease-in-out infinite alternate;
 }
 
 .terminal-frame {
@@ -686,12 +723,51 @@
   100% { opacity: 0.02; }
 }
 
-@keyframes sakura-petals {
+/* Sakura falling animations */
+@keyframes sakura-fall-1 {
   0% { 
-    transform: translateY(-100px) rotate(0deg); 
+    transform: translateY(-100px) rotate(0deg);
+    background-position: 0% 0%;
   }
   100% { 
-    transform: translateY(calc(100vh + 100px)) rotate(360deg); 
+    transform: translateY(calc(100vh + 100px)) rotate(360deg);
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes sakura-fall-2 {
+  0% { 
+    transform: translateY(-150px) rotate(0deg);
+    background-position: 0% 0%;
+  }
+  100% { 
+    transform: translateY(calc(100vh + 150px)) rotate(270deg);
+    background-position: 0% 100%;
+  }
+}
+
+/* Sakura swaying animations for natural movement */
+@keyframes sakura-sway {
+  0% { 
+    transform: translateX(-10px) rotate(0deg);
+  }
+  50% { 
+    transform: translateX(10px) rotate(5deg);
+  }
+  100% { 
+    transform: translateX(-10px) rotate(0deg);
+  }
+}
+
+@keyframes sakura-sway-2 {
+  0% { 
+    transform: translateX(5px) rotate(0deg);
+  }
+  50% { 
+    transform: translateX(-15px) rotate(-3deg);
+  }
+  100% { 
+    transform: translateX(5px) rotate(0deg);
   }
 }
 
