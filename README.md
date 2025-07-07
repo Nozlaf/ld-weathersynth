@@ -448,12 +448,36 @@ npx serve -s build -l 3002
 |----------|----------|-------------|
 | `REACT_APP_LAUNCHDARKLY_CLIENT_ID` | No | LaunchDarkly client SDK key for feature flags |
 | `REACT_APP_OPENWEATHER_API_KEY` | No | OpenWeatherMap API key for live weather data |
+| `REACT_APP_GA_MEASUREMENT_ID` | No | Google Analytics measurement ID for optional usage tracking |
 | `REACT_APP_VERSION` | No | App version for LaunchDarkly context |
 | `REACT_APP_LD_BASE_URL` | No | LaunchDarkly base URL (for proxy setups) |
 | `REACT_APP_LD_STREAM_URL` | No | LaunchDarkly stream URL (for proxy setups) |
 | `REACT_APP_LD_EVENTS_URL` | No | LaunchDarkly events URL (for proxy setups) |
 
 **Note:** All environment variables are optional. The app will work in demo mode without any configuration.
+
+#### Google Analytics Setup (Optional)
+
+Google Analytics is completely optional and the app functions perfectly without it. If you want to track usage analytics:
+
+1. **Create a Google Analytics account** at [analytics.google.com](https://analytics.google.com)
+2. **Set up a new property** for your website
+3. **Copy your Measurement ID** (format: `G-XXXXXXXXXX`)
+4. **Add it to your environment variables**:
+   ```bash
+   REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+   ```
+
+**Without Google Analytics:**
+- The app will display an informational message in the console
+- No tracking data will be collected
+- No network requests will be made to Google Analytics
+- All app functionality remains unchanged
+
+**With Google Analytics:**
+- Theme changes and user interactions will be tracked
+- Page views and app usage will be recorded
+- Analytics data will be available in your Google Analytics dashboard
 
 ## 🎯 Browser Support
 

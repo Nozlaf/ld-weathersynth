@@ -6,9 +6,9 @@ const GA_MEASUREMENT_ID = process.env.REACT_APP_GA_MEASUREMENT_ID || 'G-XXXXXXXX
 export const initializeGA = (): void => {
   if (GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
     ReactGA.initialize(GA_MEASUREMENT_ID);
-    console.log('Google Analytics initialized');
+    console.log('Google Analytics initialized with ID:', GA_MEASUREMENT_ID);
   } else {
-    console.warn('Google Analytics not initialized: Please replace GA_MEASUREMENT_ID with your actual measurement ID');
+    console.info('Google Analytics not initialized: REACT_APP_GA_MEASUREMENT_ID environment variable is not set. This is optional and the app will work normally without analytics.');
   }
 };
 
