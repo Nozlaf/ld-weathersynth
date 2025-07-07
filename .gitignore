@@ -15,6 +15,10 @@
 /logs
 *.log
 
+# Puppeteer test files and screenshots
+/screenshots
+test-weather-synth.js
+
 # misc
 .DS_Store
 .env
