@@ -243,7 +243,7 @@ The app uses OpenWeatherMap for weather data:
 - Accent: Hot pink (#ec4899)
 - Background: Soft pink gradients (#fdf2f8, #fce7f3)
 - Style: Retro-futuristic with animated falling cherry blossom petals
-- Special Feature: Animated sakura petals continuously fall in the background
+- Special Feature: Realistic animated sakura petals (3px-5px) continuously fall and drift across the screen with natural swaying motion and multiple animation layers for depth
 
 ### Typography
 
