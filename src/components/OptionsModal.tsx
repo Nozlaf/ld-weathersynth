@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme, Theme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
+import AboutModal from './AboutModal';
 import './OptionsModal.css';
 
 interface OptionsModalProps {
@@ -18,6 +19,7 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
   const [initialTheme, setInitialTheme] = useState<Theme | null>(null);
   const [hasThemeChanged, setHasThemeChanged] = useState(false);
   const [shouldThrowError, setShouldThrowError] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const wasResetUsed = useRef(false);
 
   // Throw error during render if triggered
@@ -271,6 +273,9 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
             </div>
             
             <div className="options-footer">
+              <button className="about-button" onClick={() => setIsAboutOpen(true)}>
+                [ ABOUT ]
+              </button>
               <button className="close-button" onClick={handleClose}>
                 [ CLOSE ]
               </button>
@@ -283,6 +288,11 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
           <div className="options-screen-flicker"></div>
         </div>
       </div>
+      
+      <AboutModal 
+        isOpen={isAboutOpen} 
+        onClose={() => setIsAboutOpen(false)} 
+      />
     </div>
   );
 };

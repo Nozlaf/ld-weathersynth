@@ -530,6 +530,7 @@
 .options-footer {
   display: flex;
   justify-content: center;
+  gap: 15px;
   margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid var(--modal-text-secondary);
@@ -554,6 +555,28 @@
   background: var(--modal-text-secondary);
   color: var(--modal-bg);
   box-shadow: 0 0 15px var(--modal-text-secondary);
+  transform: translateY(-2px);
+}
+
+.about-button {
+  background: transparent;
+  border: 2px solid var(--modal-text-primary);
+  color: var(--modal-text-primary);
+  padding: 10px 20px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.about-button:hover {
+  background: var(--modal-text-primary);
+  color: var(--modal-bg);
+  box-shadow: 0 0 15px var(--modal-text-primary);
   transform: translateY(-2px);
 }
 
@@ -728,6 +751,17 @@
   
   .options-title pre {
     font-size: 0.6rem;
+  }
+  
+  .options-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .about-button,
+  .close-button {
+    width: 100%;
+    padding: 12px;
   }
 }
 
