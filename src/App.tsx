@@ -188,9 +188,10 @@ const LaunchDarklyApp = withLDProvider({
   options: {
     bootstrap: 'localStorage',
     // Following Rule 2: Environment-aware configuration
-    baseUrl: process.env.REACT_APP_LD_BASE_URL || undefined,
-    streamUrl: process.env.REACT_APP_LD_STREAM_URL || undefined,
-    eventsUrl: process.env.REACT_APP_LD_EVENTS_URL || undefined,
+    // Only set URLs if environment variables exist (omit if undefined)
+    ...(process.env.REACT_APP_LD_BASE_URL && { baseUrl: process.env.REACT_APP_LD_BASE_URL }),
+    ...(process.env.REACT_APP_LD_STREAM_URL && { streamUrl: process.env.REACT_APP_LD_STREAM_URL }),
+    ...(process.env.REACT_APP_LD_EVENTS_URL && { eventsUrl: process.env.REACT_APP_LD_EVENTS_URL }),
     // Plugins directly in options as per documentation
     plugins: [
       new Observability({
