@@ -119,14 +119,7 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
     return themeNames[themeKey] || themeKey;
   };
 
-  // Base themes always available
-  const baseThemes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale'];
-  
-  // Check if Sakura theme should be shown
-  const showSakuraTheme = ldClient ? ldClient.variation('enable-sakura-theme', false) : false;
-  
-  // Build themes array conditionally
-  const themes: Theme[] = showSakuraTheme ? [...baseThemes, 'sakura'] : baseThemes;
+  const themes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura'];
 
   return (
     <div className="options-modal-backdrop" onClick={handleBackdropClick}>
