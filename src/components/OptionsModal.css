@@ -71,6 +71,14 @@
   --modal-text-accent: #ffffff;
 }
 
+.options-modal.sakura {
+  --modal-bg: #fdf2f8;
+  --modal-border: #f472b6;
+  --modal-text-primary: #831843;
+  --modal-text-secondary: #f472b6;
+  --modal-text-accent: #ec4899;
+}
+
 .options-terminal-frame {
   background: var(--modal-bg);
   border: 3px solid var(--modal-border);
@@ -118,6 +126,12 @@
     inset 0 0 20px rgba(136, 136, 136, 0.1);
 }
 
+.options-modal.sakura .options-terminal-frame {
+  box-shadow: 
+    0 0 20px var(--modal-border),
+    inset 0 0 20px rgba(244, 114, 182, 0.1);
+}
+
 .options-terminal-header {
   padding: 12px 20px;
   display: flex;
@@ -149,6 +163,10 @@
 
 .options-modal.dark-grayscale .options-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(136, 136, 136, 0.8));
+}
+
+.options-modal.sakura .options-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(244, 114, 182, 0.8));
 }
 
 .options-terminal-title {
@@ -596,6 +614,16 @@
     transparent 2px,
     rgba(136, 136, 136, 0.1) 2px,
     rgba(136, 136, 136, 0.1) 4px
+  );
+}
+
+.options-modal.sakura .options-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(244, 114, 182, 0.1) 2px,
+    rgba(244, 114, 182, 0.1) 4px
   );
 }
 

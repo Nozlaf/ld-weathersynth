@@ -334,6 +334,39 @@ resource "launchdarkly_feature_flag" "debug_mode" {
   tags = []
 }
 
+# Enable Sakura Theme Feature Flag
+resource "launchdarkly_feature_flag" "enable_sakura_theme" {
+  project_key = launchdarkly_project.weather_app.key
+  key         = "enable-sakura-theme"
+  name        = "enable-sakura-theme"
+  description = "Enable the Sakura theme with animated petals in the theme selector"
+  temporary   = true
+
+  variation_type = "boolean"
+  variations {
+    value       = true
+    name        = "Enabled"
+    description = "Show Sakura theme in theme selector"
+  }
+  variations {
+    value       = false
+    name        = "Disabled"
+    description = "Hide Sakura theme from theme selector"
+  }
+
+  defaults {
+    on_variation  = 0  # true (Enabled)
+    off_variation = 1  # false (Disabled)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = false
+  }
+
+  tags = []
+}
+
 # Environment-specific flag configurations to match current state
 # All flags are currently OFF in both environments
 
@@ -400,6 +433,16 @@ resource "launchdarkly_feature_flag_environment" "show_extra_weather_info_produc
 
 resource "launchdarkly_feature_flag_environment" "debug_mode_production" {
   flag_id      = launchdarkly_feature_flag.debug_mode.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
+resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_production" {
+  flag_id      = launchdarkly_feature_flag.enable_sakura_theme.id
   env_key      = "production"
   on           = false
   fallthrough {
@@ -479,6 +522,16 @@ resource "launchdarkly_feature_flag_environment" "debug_mode_test" {
   off_variation = 1  # false (Disabled)
 }
 
+resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_test" {
+  flag_id      = launchdarkly_feature_flag.enable_sakura_theme.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
 # Custom Metric for Theme Changes (based on existing metric)
 resource "launchdarkly_metric" "theme_change" {
   project_key = launchdarkly_project.weather_app.key
@@ -514,5 +567,6 @@ output "feature_flags" {
     enable_animations       = launchdarkly_feature_flag.enable_animations.key
     show_extra_weather_info = launchdarkly_feature_flag.show_extra_weather_info.key
     debug_mode             = launchdarkly_feature_flag.debug_mode.key
+    enable_sakura_theme     = launchdarkly_feature_flag.enable_sakura_theme.key
   }
 } 

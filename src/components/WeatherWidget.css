@@ -61,6 +61,16 @@
   --dark-grayscale-text-accent: #ffffff;
   --dark-grayscale-border: #888888;
   --dark-grayscale-glow: #888888;
+
+  /* Sakura theme */
+  --sakura-bg-primary: #fdf2f8;
+  --sakura-bg-secondary: #fce7f3;
+  --sakura-bg-terminal: #fdf2f8;
+  --sakura-text-primary: #831843;
+  --sakura-text-secondary: #f472b6;
+  --sakura-text-accent: #ec4899;
+  --sakura-border: #f472b6;
+  --sakura-glow: #f472b6;
 }
 
 .weather-widget {
@@ -155,6 +165,51 @@
   color: var(--dark-grayscale-text-primary);
 }
 
+/* Sakura theme */
+.weather-widget.sakura {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, var(--sakura-bg-primary) 0%, var(--sakura-bg-secondary) 100%);
+  color: var(--sakura-text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.weather-widget.sakura::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 10%, rgba(244, 114, 182, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 70% 90%, rgba(236, 72, 153, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 10% 80%, rgba(244, 114, 182, 0.1) 0%, transparent 30%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated Sakura petals */
+.weather-widget.sakura::after {
+  content: '🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸 🌸';
+  position: absolute;
+  top: -100px;
+  left: 0;
+  right: 0;
+  height: calc(100% + 200px);
+  font-size: 20px;
+  line-height: 100px;
+  opacity: 0.6;
+  animation: sakura-petals 25s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
 .terminal-frame {
   background: var(--bg-terminal);
   border: 3px solid var(--border);
@@ -237,6 +292,17 @@
   --glow: var(--dark-grayscale-glow);
 }
 
+.weather-widget.sakura {
+  --bg-primary: var(--sakura-bg-primary);
+  --bg-secondary: var(--sakura-bg-secondary);
+  --bg-terminal: var(--sakura-bg-terminal);
+  --text-primary: var(--sakura-text-primary);
+  --text-secondary: var(--sakura-text-secondary);
+  --text-accent: var(--sakura-text-accent);
+  --border: var(--sakura-border);
+  --glow: var(--sakura-glow);
+}
+
 /* Light theme specific overrides */
 .weather-widget.light .terminal-frame {
   box-shadow: 
@@ -256,6 +322,13 @@
   box-shadow: 
     0 0 30px var(--glow),
     inset 0 0 30px rgba(136, 136, 136, 0.1);
+}
+
+/* Sakura theme specific overrides */
+.weather-widget.sakura .terminal-frame {
+  box-shadow: 
+    0 0 30px var(--glow),
+    inset 0 0 30px rgba(244, 114, 182, 0.1);
 }
 
 .terminal-header {
@@ -574,6 +647,16 @@
   );
 }
 
+.weather-widget.sakura .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(244, 114, 182, 0.1) 2px,
+    rgba(244, 114, 182, 0.1) 4px
+  );
+}
+
 .screen-flicker {
   background: var(--bg-terminal);
   height: 100%;
@@ -601,6 +684,15 @@
   0% { opacity: 0; }
   98% { opacity: 0; }
   100% { opacity: 0.02; }
+}
+
+@keyframes sakura-petals {
+  0% { 
+    transform: translateY(-100px) rotate(0deg); 
+  }
+  100% { 
+    transform: translateY(calc(100vh + 100px)) rotate(360deg); 
+  }
 }
 
 /* Responsive design */

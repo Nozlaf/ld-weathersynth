@@ -28,6 +28,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         return 'grayscale';
       case 'dark-grayscale':
         return 'dark-grayscale';
+      case 'sakura':
+        return 'sakura';
       default:
         console.warn(`ThemeProvider - Unknown LaunchDarkly theme value: ${ldTheme}, falling back to dark-synth`);
         return 'dark-synth';
@@ -73,7 +75,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const finalTheme = savedTheme || mapLDTheme(flagTheme);
 
     // Validate final theme value
-    const validThemes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale'];
+    const validThemes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura'];
     if (validThemes.includes(finalTheme)) {
       setTheme(finalTheme);
     } else {
@@ -117,6 +119,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           case 'grayscale':
             return 'dark-grayscale';
           case 'dark-grayscale':
+            return 'sakura';
+          case 'sakura':
             return 'dark-synth';
           default:
             return 'dark-synth';
