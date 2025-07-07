@@ -58,6 +58,64 @@ resource "launchdarkly_project" "weather_app" {
   }
 }
 
+# Default Theme Feature Flag
+resource "launchdarkly_feature_flag" "default_theme" {
+  project_key = launchdarkly_project.weather_app.key
+  key         = "default-theme"
+  name        = "default-theme"
+  description = "Controls the default theme for the weather app interface"
+  temporary   = false
+
+  variation_type = "string"
+  variations {
+    value       = "dark"
+    name        = "Dark (maps to dark-synth)"
+    description = "Default dark theme mapping to dark-synth"
+  }
+  variations {
+    value       = "light"
+    name        = "Light Theme"
+    description = "Light theme with dark text"
+  }
+  variations {
+    value       = "dark-synth"
+    name        = "Dark Synth Pop"
+    description = "Retro synthwave with cyan/magenta/yellow"
+  }
+  variations {
+    value       = "dark-green"
+    name        = "Dark Green CRT"
+    description = "Matrix-style green on black"
+  }
+  variations {
+    value       = "dark-orange"
+    name        = "Dark Orange Plasma"
+    description = "Amber terminal style"
+  }
+  variations {
+    value       = "grayscale"
+    name        = "Grayscale"
+    description = "Monochrome terminal aesthetic"
+  }
+  variations {
+    value       = "dark-grayscale"
+    name        = "Dark Grayscale"
+    description = "Dark monochrome with light and dark grey elements"
+  }
+
+  defaults {
+    on_variation  = 0  # "dark" (maps to dark-synth)
+    off_variation = 2  # "dark-synth" (direct)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = false
+  }
+
+  tags = []
+}
+
 # Temperature Unit Feature Flag
 resource "launchdarkly_feature_flag" "default_temperature" {
   project_key = launchdarkly_project.weather_app.key
@@ -280,6 +338,16 @@ resource "launchdarkly_feature_flag" "debug_mode" {
 # All flags are currently OFF in both environments
 
 # Production Environment Flag States
+resource "launchdarkly_feature_flag_environment" "default_theme_production" {
+  flag_id      = launchdarkly_feature_flag.default_theme.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # "dark" (maps to dark-synth)
+  }
+  off_variation = 2  # "dark-synth" (direct)
+}
+
 resource "launchdarkly_feature_flag_environment" "default_temperature_production" {
   flag_id      = launchdarkly_feature_flag.default_temperature.id
   env_key      = "production"
@@ -341,6 +409,16 @@ resource "launchdarkly_feature_flag_environment" "debug_mode_production" {
 }
 
 # Test Environment Flag States
+resource "launchdarkly_feature_flag_environment" "default_theme_test" {
+  flag_id      = launchdarkly_feature_flag.default_theme.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # "dark" (maps to dark-synth)
+  }
+  off_variation = 2  # "dark-synth" (direct)
+}
+
 resource "launchdarkly_feature_flag_environment" "default_temperature_test" {
   flag_id      = launchdarkly_feature_flag.default_temperature.id
   env_key      = "test"
@@ -429,6 +507,7 @@ output "client_side_id_test" {
 output "feature_flags" {
   description = "Created feature flags"
   value = {
+    default_theme           = launchdarkly_feature_flag.default_theme.key
     default_temperature      = launchdarkly_feature_flag.default_temperature.key
     default_distance        = launchdarkly_feature_flag.default_distance.key
     weather_refresh_interval = launchdarkly_feature_flag.weather_refresh_interval.key

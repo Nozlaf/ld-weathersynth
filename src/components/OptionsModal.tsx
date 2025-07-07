@@ -73,6 +73,8 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
         return 'dark-orange';
       case 'grayscale':
         return 'grayscale';
+      case 'dark-grayscale':
+        return 'dark-grayscale';
       default:
         return 'dark-synth';
     }
@@ -110,12 +112,13 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
       'dark-green': 'Dark Green CRT',
       'dark-orange': 'Dark Orange Plasma',
       'light': 'Light',
-      'grayscale': 'Grayscale'
+      'grayscale': 'Grayscale',
+      'dark-grayscale': 'Dark Grayscale'
     };
     return themeNames[themeKey] || themeKey;
   };
 
-  const themes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale'];
+  const themes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale'];
 
   return (
     <div className="options-modal-backdrop" onClick={handleBackdropClick}>

@@ -77,6 +77,17 @@
   --modal-success: #006600;
 }
 
+.api-error-modal.dark-grayscale {
+  --modal-bg: #000000;
+  --modal-border: #cc2200;
+  --modal-text-primary: #cccccc;
+  --modal-text-secondary: #cc2200;
+  --modal-text-accent: #ffffff;
+  --modal-error: #cc2200;
+  --modal-warning: #ffaa00;
+  --modal-success: #88ff88;
+}
+
 .api-error-terminal-frame {
   background: var(--modal-bg);
   border: 3px solid var(--modal-border);
@@ -115,6 +126,12 @@
     inset 0 0 20px rgba(204, 34, 0, 0.1);
 }
 
+.api-error-modal.dark-grayscale .api-error-terminal-frame {
+  box-shadow: 
+    0 0 30px var(--modal-border),
+    inset 0 0 20px rgba(204, 34, 0, 0.1);
+}
+
 .api-error-terminal-header {
   padding: 12px 20px;
   display: flex;
@@ -141,6 +158,10 @@
 }
 
 .api-error-modal.grayscale .api-error-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(204, 34, 0, 0.8));
+}
+
+.api-error-modal.dark-grayscale .api-error-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(204, 34, 0, 0.8));
 }
 
@@ -422,6 +443,16 @@ code {
 }
 
 .api-error-modal.grayscale .api-error-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(204, 34, 0, 0.1) 2px,
+    rgba(204, 34, 0, 0.1) 4px
+  );
+}
+
+.api-error-modal.dark-grayscale .api-error-scan-lines {
   background: repeating-linear-gradient(
     0deg,
     transparent,

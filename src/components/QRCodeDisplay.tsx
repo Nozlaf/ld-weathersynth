@@ -1,11 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
+import { useTheme, Theme } from '../hooks/useTheme';
 import './QRCodeDisplay.css';
 
 const QRCodeDisplay: React.FC = () => {
   const [isDesktop, setIsDesktop] = useState(false);
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
   const [isVisible, setIsVisible] = useState(true);
+  const { theme } = useTheme();
+
+  // Map theme to QR code colors
+  const getQRCodeColors = (currentTheme: Theme) => {
+    switch (currentTheme) {
+      case 'dark-synth':
+        return {
+          dark: '#ff00ff',    // Magenta
+          light: '#0f0f23'    // Dark background
+        };
+      case 'dark-green':
+        return {
+          dark: '#00ff00',    // Green
+          light: '#001100'    // Dark green background
+        };
+      case 'dark-orange':
+        return {
+          dark: '#ff8800',    // Orange
+          light: '#1a0e00'    // Dark orange background
+        };
+      case 'light':
+        return {
+          dark: '#8b4513',    // Brown
+          light: '#f0f0e8'    // Light background
+        };
+      case 'grayscale':
+        return {
+          dark: '#666666',    // Gray
+          light: '#ffffff'    // White background
+        };
+      case 'dark-grayscale':
+        return {
+          dark: '#cccccc',    // Light gray
+          light: '#000000'    // Black background
+        };
+      default:
+        return {
+          dark: '#ff00ff',    // Default to magenta
+          light: '#0f0f23'    // Default to dark
+        };
+    }
+  };
 
   useEffect(() => {
     // Detect if device is desktop
@@ -17,17 +60,16 @@ const QRCodeDisplay: React.FC = () => {
       setIsDesktop(!isMobile && !isSmallScreen);
     };
 
-    // Generate QR code with current URL
+    // Generate QR code with current URL and theme colors
     const generateQRCode = async () => {
       try {
         const currentUrl = window.location.href;
+        const colors = getQRCodeColors(theme);
+        
         const qrCodeUrl = await QRCode.toDataURL(currentUrl, {
           errorCorrectionLevel: 'M',
           margin: 1,
-          color: {
-            dark: '#00ff00',  // Green for retro look
-            light: '#000000'  // Black background
-          },
+          color: colors,
           width: 120
         });
         
@@ -47,14 +89,14 @@ const QRCodeDisplay: React.FC = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [theme]); // Add theme as dependency to regenerate QR code when theme changes
 
   if (!isDesktop || !qrCodeDataURL) {
     return null;
   }
 
   return (
-    <div className={`qr-code-display ${isVisible ? 'visible' : 'hidden'}`}>
+    <div className={`qr-code-display ${theme} ${isVisible ? 'visible' : 'hidden'}`}>
       <div className="qr-code-container">
         <div className="qr-code-header">
           <span className="qr-code-title">📱 MOBILE ACCESS</span>

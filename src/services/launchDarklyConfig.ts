@@ -16,6 +16,12 @@ export interface LocationContext {
   fullLocation: string;
 }
 
+// Utility function to detect night time from weather icon code
+export const isNightTimeFromIcon = (iconCode: string): boolean => {
+  // OpenWeatherMap icon codes end with 'n' for night, 'd' for day
+  return iconCode.endsWith('n');
+};
+
 // Generate a persistent random GUID for anonymous users
 const generateGuid = (): string => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -49,7 +55,7 @@ const getPersistentUserId = (): string => {
 };
 
 // Following Rule 2: Context creation utility
-export const createLDContext = (userId?: string, locationContext?: LocationContext): LDContext => {
+export const createLDContext = (userId?: string, locationContext?: LocationContext, nightTime?: boolean): LDContext => {
   const context: LDContext = {
     kind: 'user',
     key: userId || getPersistentUserId(),
@@ -58,6 +64,8 @@ export const createLDContext = (userId?: string, locationContext?: LocationConte
       buildVersion: process.env.REACT_APP_VERSION || '1.0.0',
       sessionId: sessionStorage.getItem('sessionId') || Math.random().toString(36),
       environment: process.env.NODE_ENV || 'development',
+      // Always include night_time, default to false if not determined
+      night_time: nightTime !== undefined ? nightTime : false,
     }
   };
 
@@ -88,21 +96,27 @@ export const parseLocationString = (locationString: string): LocationContext => 
 };
 
 // Re-identify with LaunchDarkly when location is available
-export const reIdentifyWithLocation = (ldClient: any, locationString: string): void => {
+export const reIdentifyWithLocation = (ldClient: any, locationString: string, weatherIcon?: string): void => {
   try {
     const locationContext = parseLocationString(locationString);
     const currentUserId = getPersistentUserId();
-    const newContext = createLDContext(currentUserId, locationContext);
     
-    console.log('🔍 DEBUG: Re-identifying with LaunchDarkly with location context:', {
+    // Detect night time from weather icon if available, default to false if no icon
+    const nightTime = weatherIcon ? isNightTimeFromIcon(weatherIcon) : false;
+    
+    const newContext = createLDContext(currentUserId, locationContext, nightTime);
+    
+    console.log('🔍 DEBUG: Re-identifying with LaunchDarkly with location and night time context:', {
       city: locationContext.city,
       country: locationContext.country,
-      fullLocation: locationContext.fullLocation
+      fullLocation: locationContext.fullLocation,
+      nightTime: nightTime,
+      weatherIcon: weatherIcon
     });
     
-    // Re-identify the user with the new context including location
+    // Re-identify the user with the new context including location and night time
     ldClient.identify(newContext).then(() => {
-      console.log('🔍 DEBUG: LaunchDarkly re-identification with location successful');
+      console.log('🔍 DEBUG: LaunchDarkly re-identification with location and night time successful');
     }).catch((error: any) => {
       console.error('🔍 DEBUG: LaunchDarkly re-identification failed:', error);
     });

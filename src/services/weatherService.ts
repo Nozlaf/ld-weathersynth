@@ -91,9 +91,9 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
       icon: '01d',
     };
 
-    // Re-identify with LaunchDarkly using the mock location context
+    // Re-identify with LaunchDarkly using the mock location context and night time detection
     if (ldClient && mockData.location) {
-      reIdentifyWithLocation(ldClient, mockData.location);
+      reIdentifyWithLocation(ldClient, mockData.location, mockData.icon);
     }
 
     return mockData;
@@ -149,9 +149,9 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
       weatherDebug.getDebugInfo().location.fallbackUsed
     );
 
-    // Re-identify with LaunchDarkly using the location context
+    // Re-identify with LaunchDarkly using the location context and night time detection
     if (ldClient && weatherData.location) {
-      reIdentifyWithLocation(ldClient, weatherData.location);
+      reIdentifyWithLocation(ldClient, weatherData.location, weatherData.icon);
     }
 
     return weatherData;

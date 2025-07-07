@@ -114,6 +114,7 @@ The `default-theme` flag accepts the following values:
 | `"dark-green"` | **Dark Green** | Matrix-style green on black |
 | `"dark-orange"` | **Dark Orange** | Amber terminal style |
 | `"grayscale"` | **Grayscale** | Monochrome terminal aesthetic |
+| `"dark-grayscale"` | **Dark Grayscale** | Dark monochrome with light and dark grey elements |
 
 **Note:** The app also supports manual theme selection via the Options panel, which overrides the LaunchDarkly flag.
 
@@ -159,7 +160,7 @@ The app uses OpenWeatherMap for weather data:
 ## ✨ Key Features
 
 ### 🎭 Multiple Theme Support
-- **5 unique themes** with distinct color schemes and aesthetics
+- **6 unique themes** with distinct color schemes and aesthetics
 - **LaunchDarkly integration** for remote theme control
 - **Manual theme selection** via options panel
 - **Weather icon theming** - icons adapt to theme colors using CSS filters
@@ -225,8 +226,15 @@ The app uses OpenWeatherMap for weather data:
 **Grayscale Theme**
 - Primary: Light gray (#666666)
 - Secondary: Medium gray variations
-- Background: Dark grays and blacks
+- Background: White and light grays
 - Style: Monochrome terminal aesthetic
+
+**Dark Grayscale Theme**
+- Primary: Light gray (#cccccc)
+- Secondary: Medium gray (#888888)
+- Accent: White (#ffffff)
+- Background: Black and dark grays
+- Style: Dark monochrome terminal aesthetic
 
 ### Typography
 
