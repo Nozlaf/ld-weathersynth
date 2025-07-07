@@ -95,9 +95,10 @@ const WeatherWidget: React.FC = () => {
     setApiError(null);
   };
 
-  // Get LaunchDarkly flags
+  // Get LaunchDarkly flags - Following Rule 1: Centralized evaluation with predictable fallback
   const enableAnimations = ldClient ? ldClient.variation('enable-animations', true) : true;
   const showExtraWeatherInfo = ldClient ? ldClient.variation('show-extra-weather-info', true) : true;
+  const showMoonPhase = ldClient ? ldClient.variation('show-moon-phase', true) : true;
 
   useEffect(() => {
     console.log('🔍 DEBUG: WeatherWidget useEffect setting up');
@@ -173,6 +174,10 @@ const WeatherWidget: React.FC = () => {
         console.log('🔍 DEBUG: default-distance flag changed:', changes['default-distance']);
         setDistanceUnit(changes['default-distance'].current);
       }
+      if (changes['show-moon-phase']) {
+        console.log('🔍 DEBUG: show-moon-phase flag changed:', changes['show-moon-phase']);
+        // Component will automatically re-render and pick up the new flag value
+      }
     };
     
     ldClient.on('change', handleFlagChange);
@@ -201,7 +206,7 @@ const WeatherWidget: React.FC = () => {
   const getWeatherIcon = (iconCode: string) => {
     // Retro-style weather icons using Unicode
     const iconMap: { [key: string]: string } = {
-      '01d': '☀️', '01n': moonPhaseEmoji, // Use accurate moon phase for clear nights
+      '01d': '☀️', '01n': '🌌', // Clear night sky for clear nights (moon phase shown separately)
       '02d': '⛅', '02n': '☁️',
       '03d': '☁️', '03n': '☁️',
       '04d': '☁️', '04n': '☁️',
@@ -342,6 +347,14 @@ SYSTEM ERROR: ${error}
                   <span className="detail-label">WIND:</span>
                   <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
                 </div>
+                {showMoonPhase && (
+                  <div className="detail-row">
+                    <span className="detail-label">MOON PHASE:</span>
+                    <span className="detail-value moon-phase-detail">
+                      {moonPhaseEmoji}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

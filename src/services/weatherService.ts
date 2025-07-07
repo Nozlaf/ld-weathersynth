@@ -159,4 +159,23 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
 export const getCurrentWeather = async (ldClient?: any): Promise<WeatherData> => {
   const location = await getCurrentLocation();
   return getWeatherData(location, ldClient);
+};
+
+// New function to get cached weather data from server
+export const getCachedWeatherData = async (): Promise<any> => {
+  const apiUrl = `${API_BASE_URL}/api/weather/cache`;
+  
+  try {
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch cached weather data: HTTP ${response.status}`);
+    }
+    
+    const cachedData = await response.json();
+    return cachedData;
+  } catch (error) {
+    console.error('Failed to fetch cached weather data:', error);
+    throw error;
+  }
 }; 

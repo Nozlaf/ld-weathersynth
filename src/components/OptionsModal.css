@@ -87,6 +87,14 @@
   --modal-text-accent: #2563eb;
 }
 
+.options-modal.heart-of-gold {
+  --modal-bg: #000000;
+  --modal-border: #0a0a0a;
+  --modal-text-primary: #0f0f0f;
+  --modal-text-secondary: #1a1a1a;
+  --modal-text-accent: #2a2a2a;
+}
+
 .options-terminal-frame {
   background: var(--modal-bg);
   border: 3px solid var(--modal-border);
@@ -146,6 +154,12 @@
     inset 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
+.options-modal.heart-of-gold .options-terminal-frame {
+  box-shadow: 
+    0 0 20px rgba(0, 0, 0, 0.9),
+    inset 0 0 20px rgba(10, 10, 10, 0.5);
+}
+
 .options-terminal-header {
   padding: 12px 20px;
   display: flex;
@@ -185,6 +199,10 @@
 
 .options-modal.winter .options-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(59, 130, 246, 0.8));
+}
+
+.options-modal.heart-of-gold .options-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(10, 10, 10, 0.9));
 }
 
 .options-terminal-title {
@@ -676,6 +694,73 @@
     rgba(59, 130, 246, 0.1) 2px,
     rgba(59, 130, 246, 0.1) 4px
   );
+}
+
+.options-modal.heart-of-gold .options-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+}
+
+/* Heart of Gold theme - Colorless button styling */
+.options-modal.heart-of-gold .theme-reset-button {
+  border-color: #333333;
+  color: #333333;
+}
+
+.options-modal.heart-of-gold .theme-reset-button:hover {
+  background: #333333;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(51, 51, 51, 0.5);
+}
+
+.options-modal.heart-of-gold .temperature-button,
+.options-modal.heart-of-gold .distance-button {
+  border-color: #2a2a2a;
+  color: #2a2a2a;
+}
+
+.options-modal.heart-of-gold .temperature-button:hover,
+.options-modal.heart-of-gold .distance-button:hover {
+  background: #2a2a2a;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(42, 42, 42, 0.5);
+}
+
+.options-modal.heart-of-gold .temperature-button.active,
+.options-modal.heart-of-gold .distance-button.active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #000000;
+  box-shadow: 0 0 15px rgba(26, 26, 26, 0.5);
+}
+
+.options-modal.heart-of-gold .error-test-button {
+  border-color: #444444;
+  color: #444444;
+}
+
+.options-modal.heart-of-gold .error-test-button:hover {
+  background: #444444;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(68, 68, 68, 0.5);
+}
+
+.options-modal.heart-of-gold .close-button,
+.options-modal.heart-of-gold .about-button {
+  border-color: #2a2a2a;
+  color: #2a2a2a;
+}
+
+.options-modal.heart-of-gold .close-button:hover,
+.options-modal.heart-of-gold .about-button:hover {
+  background: #2a2a2a;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(42, 42, 42, 0.5);
 }
 
 .options-screen-flicker {

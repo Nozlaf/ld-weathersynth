@@ -5,6 +5,7 @@ import { useTheme } from '../hooks/useTheme';
 import WeatherDebugService, { WeatherDebugInfo } from '../services/weatherDebugService';
 import locationSimulationService from '../services/locationSimulationService';
 import { LocationSimulationState } from '../types/locationSimulation';
+import { getCachedWeatherData } from '../services/weatherService';
 import './LaunchDarklyDebugPanel.css';
 
 // Declare LDRecord for LaunchDarkly session recording
@@ -36,6 +37,9 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     activeLocation: null,
     presetLocations: []
   });
+  const [cachedWeatherData, setCachedWeatherData] = useState<any>(null);
+  const [loadingCachedWeather, setLoadingCachedWeather] = useState(false);
+  const [cachedWeatherError, setCachedWeatherError] = useState<string | null>(null);
 
   // Throw error during render if triggered
   if (shouldThrowError) {
@@ -149,6 +153,21 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
+    }
+  };
+
+  const handleViewCachedWeather = async () => {
+    setLoadingCachedWeather(true);
+    setCachedWeatherError(null);
+    
+    try {
+      const cachedData = await getCachedWeatherData();
+      setCachedWeatherData(cachedData);
+    } catch (error) {
+      setCachedWeatherError(error instanceof Error ? error.message : 'Failed to fetch cached weather data');
+      setCachedWeatherData(null);
+    } finally {
+      setLoadingCachedWeather(false);
     }
   };
 
@@ -480,6 +499,69 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
                   <span className="info-value no-context">Weather debug info not available</span>
                 </div>
               )}
+              
+              {/* Cached Weather Data Section */}
+              <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(0, 255, 255, 0.3)' }}>
+                <div className="info-row">
+                  <span className="info-label" style={{ color: '#ffff00', fontWeight: 'bold' }}>SERVER CACHE:</span>
+                  <button 
+                    className="error-test-button"
+                    onClick={handleViewCachedWeather}
+                    disabled={loadingCachedWeather}
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '6px 12px',
+                      minWidth: '120px',
+                      backgroundColor: 'transparent',
+                      border: '2px solid #00ffff',
+                      color: '#00ffff'
+                    }}
+                  >
+                    {loadingCachedWeather ? '[ LOADING... ]' : '[ VIEW CACHE ]'}
+                  </button>
+                </div>
+                
+                {cachedWeatherError && (
+                  <div className="info-row">
+                    <span className="info-label">ERROR:</span>
+                    <span className="info-value" style={{ color: '#ff4444' }}>
+                      {cachedWeatherError}
+                    </span>
+                  </div>
+                )}
+                
+                {cachedWeatherData && (
+                  <div style={{ marginTop: '10px' }}>
+                    <div className="info-row">
+                      <span className="info-label">CACHE STATUS:</span>
+                      <span className="info-value" style={{ color: '#00ff00' }}>
+                        ✅ Data Retrieved
+                      </span>
+                    </div>
+                    
+                    {/* Display cached data in a readable format */}
+                    <div style={{ 
+                      background: 'rgba(0, 255, 255, 0.05)', 
+                      border: '1px solid rgba(0, 255, 255, 0.2)', 
+                      borderRadius: '8px', 
+                      padding: '10px', 
+                      marginTop: '10px',
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}>
+                      <pre style={{ 
+                        margin: 0, 
+                        fontSize: '0.75rem', 
+                        color: '#00ffff', 
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {JSON.stringify(cachedWeatherData, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

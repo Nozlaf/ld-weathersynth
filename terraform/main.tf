@@ -112,6 +112,11 @@ resource "launchdarkly_feature_flag" "default_theme" {
     name        = "Winter Wonderland"
     description = "Icy blue theme with animated falling snowflakes"
   }
+  variations {
+    value       = "heart-of-gold"
+    name        = "Heart of Gold"
+    description = "Black on black with black light - inspired by The Hitchhiker's Guide to the Galaxy"
+  }
 
   defaults {
     on_variation  = 0  # "dark" (maps to dark-synth)
@@ -344,6 +349,39 @@ resource "launchdarkly_feature_flag" "debug_mode" {
   tags = []
 }
 
+# Show Moon Phase Feature Flag
+resource "launchdarkly_feature_flag" "show_moon_phase" {
+  project_key = launchdarkly_project.weather_app.key
+  key         = "show-moon-phase"
+  name        = "show-moon-phase"
+  description = "Display moon phase information in weather details section"
+  temporary   = true
+
+  variation_type = "boolean"
+  variations {
+    value       = true
+    name        = "Enabled"
+    description = "Show moon phase in weather details"
+  }
+  variations {
+    value       = false
+    name        = "Disabled"
+    description = "Hide moon phase information"
+  }
+
+  defaults {
+    on_variation  = 0  # true (Enabled)
+    off_variation = 1  # false (Disabled)
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = false
+  }
+
+  tags = []
+}
+
 # Enable Sakura Theme Feature Flag
 resource "launchdarkly_feature_flag" "enable_sakura_theme" {
   project_key = launchdarkly_project.weather_app.key
@@ -451,6 +489,16 @@ resource "launchdarkly_feature_flag_environment" "debug_mode_production" {
   off_variation = 1  # false (Disabled)
 }
 
+resource "launchdarkly_feature_flag_environment" "show_moon_phase_production" {
+  flag_id      = launchdarkly_feature_flag.show_moon_phase.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
 resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_production" {
   flag_id      = launchdarkly_feature_flag.enable_sakura_theme.id
   env_key      = "production"
@@ -532,6 +580,16 @@ resource "launchdarkly_feature_flag_environment" "debug_mode_test" {
   off_variation = 1  # false (Disabled)
 }
 
+resource "launchdarkly_feature_flag_environment" "show_moon_phase_test" {
+  flag_id      = launchdarkly_feature_flag.show_moon_phase.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # true (Enabled)
+  }
+  off_variation = 1  # false (Disabled)
+}
+
 resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_test" {
   flag_id      = launchdarkly_feature_flag.enable_sakura_theme.id
   env_key      = "test"
@@ -577,6 +635,7 @@ output "feature_flags" {
     enable_animations       = launchdarkly_feature_flag.enable_animations.key
     show_extra_weather_info = launchdarkly_feature_flag.show_extra_weather_info.key
     debug_mode             = launchdarkly_feature_flag.debug_mode.key
+    show_moon_phase = launchdarkly_feature_flag.show_moon_phase.key
     enable_sakura_theme     = launchdarkly_feature_flag.enable_sakura_theme.key
   }
 } 

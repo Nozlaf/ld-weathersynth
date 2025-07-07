@@ -96,6 +96,15 @@
   --modal-text-normal: #1e3a8a;
 }
 
+.about-modal.heart-of-gold {
+  --modal-bg: #000000;
+  --modal-border: #0a0a0a;
+  --modal-text-primary: #0f0f0f;
+  --modal-text-secondary: #1a1a1a;
+  --modal-text-accent: #2a2a2a;
+  --modal-text-normal: #1a1a1a;
+}
+
 /* Terminal Frame */
 .about-terminal-frame {
   background: var(--modal-bg);
@@ -155,6 +164,12 @@
     inset 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
+.about-modal.heart-of-gold .about-terminal-frame {
+  box-shadow: 
+    0 0 20px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(26, 26, 26, 0.3);
+}
+
 /* Terminal Header */
 .about-terminal-header {
   padding: 12px 20px;
@@ -194,6 +209,10 @@
 
 .about-modal.winter .about-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(59, 130, 246, 0.8));
+}
+
+.about-modal.heart-of-gold .about-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(26, 26, 26, 0.8));
 }
 
 .about-terminal-title {
@@ -445,6 +464,18 @@
   transform: translateY(-2px);
 }
 
+/* Heart of Gold theme - Colorless button styling */
+.about-modal.heart-of-gold .close-button {
+  border-color: #2a2a2a;
+  color: #2a2a2a;
+}
+
+.about-modal.heart-of-gold .close-button:hover {
+  background: #2a2a2a;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(42, 42, 42, 0.5);
+}
+
 /* CRT Effects */
 .about-crt-effects {
   position: absolute;
@@ -540,6 +571,16 @@
     transparent 2px,
     rgba(59, 130, 246, 0.1) 2px,
     rgba(59, 130, 246, 0.1) 4px
+  );
+}
+
+.about-modal.heart-of-gold .about-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
   );
 }
 

@@ -110,6 +110,17 @@
   --modal-success: #88ff88;
 }
 
+.api-error-modal.heart-of-gold {
+  --modal-bg: #000000;
+  --modal-border: #0a0a0a;
+  --modal-text-primary: #0f0f0f;
+  --modal-text-secondary: #1a1a1a;
+  --modal-text-accent: #2a2a2a;
+  --modal-error: #333333;
+  --modal-warning: #444444;
+  --modal-success: #555555;
+}
+
 .api-error-terminal-frame {
   background: var(--modal-bg);
   border: 3px solid var(--modal-border);
@@ -166,6 +177,12 @@
     inset 0 0 20px rgba(204, 34, 0, 0.1);
 }
 
+.api-error-modal.heart-of-gold .api-error-terminal-frame {
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(26, 26, 26, 0.3);
+}
+
 .api-error-terminal-header {
   padding: 12px 20px;
   display: flex;
@@ -205,6 +222,10 @@
 
 .api-error-modal.winter .api-error-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(204, 34, 0, 0.8));
+}
+
+.api-error-modal.heart-of-gold .api-error-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(26, 26, 26, 0.8));
 }
 
 .api-error-terminal-title {
@@ -426,6 +447,29 @@ code {
   transform: translateY(-2px);
 }
 
+/* Heart of Gold theme - Colorless button styling */
+.api-error-modal.heart-of-gold .retry-button {
+  border-color: #333333;
+  color: #333333;
+}
+
+.api-error-modal.heart-of-gold .retry-button:hover {
+  background: #333333;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(51, 51, 51, 0.5);
+}
+
+.api-error-modal.heart-of-gold .close-button {
+  border-color: #2a2a2a;
+  color: #2a2a2a;
+}
+
+.api-error-modal.heart-of-gold .close-button:hover {
+  background: #2a2a2a;
+  color: #000000;
+  box-shadow: 0 0 10px rgba(42, 42, 42, 0.5);
+}
+
 /* CRT Effects */
 .api-error-crt-effects {
   position: absolute;
@@ -521,6 +565,16 @@ code {
     transparent 2px,
     rgba(204, 34, 0, 0.1) 2px,
     rgba(204, 34, 0, 0.1) 4px
+  );
+}
+
+.api-error-modal.heart-of-gold .api-error-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.3) 2px,
+    rgba(0, 0, 0, 0.3) 4px
   );
 }
 

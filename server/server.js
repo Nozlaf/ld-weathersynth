@@ -276,6 +276,54 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Cached weather data endpoint (for debugging)
+app.get('/api/weather/cache', (req, res) => {
+  const cachedEntries = [];
+  const now = Date.now();
+  
+  // Convert cache Map to array with additional metadata
+  weatherCache.forEach((entry, key) => {
+    const isValid = isCacheValid(entry);
+    const ageInSeconds = Math.round((now - entry.timestamp) / 1000);
+    const ageInMinutes = Math.round(ageInSeconds / 60);
+    
+    cachedEntries.push({
+      coordinates: key,
+      city: entry.data.location,
+      temperature: entry.data.temperature,
+      description: entry.data.description,
+      humidity: entry.data.humidity,
+      windSpeed: entry.data.windSpeed,
+      icon: entry.data.icon,
+      isMockData: entry.data.mockData || false,
+      cached: {
+        timestamp: entry.timestamp,
+        timestampReadable: new Date(entry.timestamp).toISOString(),
+        ageInSeconds,
+        ageInMinutes,
+        isValid,
+        expiresIn: isValid ? Math.round((CACHE_DURATION - (now - entry.timestamp)) / 1000) : 0
+      }
+    });
+  });
+  
+  // Sort by timestamp (newest first)
+  cachedEntries.sort((a, b) => b.cached.timestamp - a.cached.timestamp);
+  
+  res.json({
+    cacheInfo: {
+      totalEntries: weatherCache.size,
+      validEntries: cachedEntries.filter(e => e.cached.isValid).length,
+      expiredEntries: cachedEntries.filter(e => !e.cached.isValid).length,
+      cacheDuration: CACHE_DURATION,
+      cacheDurationReadable: '1 hour',
+      lastCleanup: 'Every 30 minutes'
+    },
+    entries: cachedEntries,
+    retrievedAt: new Date().toISOString()
+  });
+});
+
 // Serve static files from React build
 const buildPath = path.join(__dirname, '../build');
 app.use(express.static(buildPath));
