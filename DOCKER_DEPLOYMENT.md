@@ -25,7 +25,7 @@ docker-compose up -d
 ### 2. Access the Application
 
 - **Local:** http://localhost:3000
-- **Health Check:** http://localhost:3000/health
+- **Health Check:** http://localhost:3000/api/health
 
 ## 🔧 Manual Docker Commands
 
@@ -46,15 +46,16 @@ docker build -t weather-synth:1.2.0 .
 docker run -d \
   --name weather-synth-app \
   --restart unless-stopped \
-  -p 3000:80 \
+  -p 3000:3001 \
   weather-synth:latest
 
 # Run with environment variables
 docker run -d \
   --name weather-synth-app \
   --restart unless-stopped \
-  -p 3000:80 \
+  -p 3000:3001 \
   -e NODE_ENV=production \
+  -e OPENWEATHER_API_KEY=your_api_key_here \
   weather-synth:latest
 ```
 
@@ -71,8 +72,10 @@ NODE_ENV=production
 # Optional: Custom port
 PORT=3000
 
-# Optional: API Keys (if needed)
-REACT_APP_OPENWEATHER_API_KEY=your_api_key_here
+# Backend API Keys (server-side only)
+OPENWEATHER_API_KEY=your_api_key_here
+
+# Frontend API Keys (client-side)
 REACT_APP_LAUNCHDARKLY_CLIENT_ID=your_client_id_here
 ```
 
@@ -88,13 +91,14 @@ services:
     container_name: weather-synth-prod
     restart: unless-stopped
     ports:
-      - "80:80"  # Production port
+      - "80:3001"  # Production port
     environment:
       - NODE_ENV=production
+      - OPENWEATHER_API_KEY=your_api_key_here
     volumes:
-      - ./logs:/var/log/nginx
+      - ./logs:/app/logs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,15 +128,15 @@ docker stats weather-synth-app
 # Access the container shell
 docker exec -it weather-synth-app /bin/sh
 
-# View nginx configuration
-docker exec -it weather-synth-app cat /etc/nginx/nginx.conf
+# View server configuration
+docker exec -it weather-synth-app cat /app/server/server.js
 ```
 
 ### Health Checks
 
 ```bash
 # Manual health check
-curl http://localhost:3000/health
+curl http://localhost:3000/api/health
 
 # Docker health check status
 docker inspect weather-synth-app | grep -A 10 "Health"
@@ -148,10 +152,12 @@ docker inspect weather-synth-app | grep -A 10 "Health"
 - **Content-Security-Policy:** Restricts resource loading
 - **Referrer-Policy:** Controls referrer information
 
-### Nginx Optimizations
+### Backend API Security
 
-- **Gzip Compression:** Reduces bandwidth usage
-- **Static Asset Caching:** Improves performance
+- **Rate Limiting:** Prevents API abuse (30 requests/minute per IP)
+- **Input Validation:** Validates coordinates and parameters
+- **Server-side API Keys:** No client-side exposure
+- **CORS Configuration:** Controls cross-origin requests
 - **Health Check Endpoint:** For load balancer integration
 - **Error Page Handling:** Graceful error responses
 
@@ -180,9 +186,10 @@ services:
 ### Multi-stage Build Optimization
 
 The Dockerfile uses multi-stage builds to:
-- **Build Stage:** Compile React app with Node.js
-- **Production Stage:** Serve with lightweight Nginx
-- **Result:** ~50MB production image (vs 1GB+ with Node.js)
+- **Frontend Build Stage:** Compile React app with Node.js
+- **Backend Build Stage:** Install server dependencies  
+- **Production Stage:** Serve with Node.js backend + static files
+- **Result:** ~100MB production image with secure API proxy
 
 ## 📊 Performance Optimization
 

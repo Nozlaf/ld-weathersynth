@@ -10,21 +10,24 @@ services:
     container_name: weather-synth-app
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3000:3001"
     environment:
       - NODE_ENV=production
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    env_file:
+      - .env
     networks:
       - weather-synth-network
     volumes:
       # Optional: Mount logs for debugging
-      - ./logs:/var/log/nginx
+      - ./logs:/app/logs
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.weather-synth.rule=Host(`weather.localhost`)"
       - "traefik.http.routers.weather-synth.entrypoints=web"
-      - "traefik.http.services.weather-synth.loadbalancer.server.port=80"
+      - "traefik.http.services.weather-synth.loadbalancer.server.port=3001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

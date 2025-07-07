@@ -30,8 +30,8 @@ class WeatherDebugService {
   private constructor() {
     this.debugInfo = {
       apiKey: {
-        hasKey: !!process.env.REACT_APP_OPENWEATHER_API_KEY,
-        status: process.env.REACT_APP_OPENWEATHER_API_KEY ? 'Present' : 'Missing (Using Mock Data)'
+        hasKey: false, // Will be updated by backend status check
+        status: 'Checking...'
       },
       location: {
         method: 'Unknown',
@@ -42,9 +42,12 @@ class WeatherDebugService {
         updateInterval: 5, // 5 minutes (now in minutes instead of milliseconds)
         timeout: 10000,
         units: 'metric',
-        provider: 'OpenWeatherMap'
+        provider: 'Backend API Proxy'
       }
     };
+    
+    // Check API status from backend
+    this.checkApiStatus();
   }
 
   public static getInstance(): WeatherDebugService {
@@ -100,6 +103,35 @@ class WeatherDebugService {
     const minutesAgo = Math.floor(timeAgo / 60000);
     
     return `${req.status} (${minutesAgo}m ago)`;
+  }
+
+  private async checkApiStatus(): Promise<void> {
+    try {
+      const API_BASE_URL = process.env.NODE_ENV === 'production' 
+        ? '' // Same origin in production 
+        : 'http://localhost:3001'; // Backend server in development
+      
+      const response = await fetch(`${API_BASE_URL}/api/status`);
+      
+      if (response.ok) {
+        const status = await response.json();
+        this.debugInfo.apiKey = {
+          hasKey: status.apiKey.hasKey,
+          status: status.apiKey.status
+        };
+      } else {
+        this.debugInfo.apiKey = {
+          hasKey: false,
+          status: 'Backend unavailable'
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to check API status:', error);
+      this.debugInfo.apiKey = {
+        hasKey: false,
+        status: 'Status check failed'
+      };
+    }
   }
 }
 

@@ -62,24 +62,19 @@ const APIErrorModal: React.FC<APIErrorModalProps> = ({
                 </div>
                 
                 <div className="error-description">
-                  <p>The OpenWeather API key is invalid or missing. To get real weather data, you need to set up a free API key.</p>
+                  <p>The weather service is temporarily unavailable. This may be due to a server configuration issue or network connectivity problems.</p>
                 </div>
                 
                 <div className="setup-instructions">
-                  <div className="instruction-title">🔧 SETUP INSTRUCTIONS:</div>
+                  <div className="instruction-title">🔧 TROUBLESHOOTING:</div>
                   <ol className="instruction-list">
-                    <li>Visit <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="api-link">openweathermap.org/api</a></li>
-                    <li>Sign up for a free account</li>
-                    <li>Get your API key from the dashboard</li>
-                    <li>Add it to your <code>.env</code> file:</li>
+                    <li>Check your internet connection</li>
+                    <li>Try refreshing the page</li>
+                    <li>If the problem persists, the weather service may be temporarily down</li>
+                    <li>The app will continue to work with demo weather data</li>
                   </ol>
-                  <div className="code-block">
-                    <pre>
-                      REACT_APP_OPENWEATHER_API_KEY=your_api_key_here
-                    </pre>
-                  </div>
                   <div className="note">
-                    💡 <strong>Note:</strong> New API keys may take up to 10 minutes to activate.
+                    💡 <strong>Note:</strong> This is a backend service issue. Your API key configuration is handled server-side for security.
                   </div>
                 </div>
                 

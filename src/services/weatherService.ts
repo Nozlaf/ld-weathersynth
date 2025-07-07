@@ -22,8 +22,12 @@ export interface Location {
   lon: number;
 }
 
-const OPENWEATHER_API_KEY = process.env.REACT_APP_OPENWEATHER_API_KEY;
 const weatherDebug = WeatherDebugService.getInstance();
+
+// Backend API configuration
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // Same origin in production 
+  : 'http://localhost:3001'; // Backend server in development
 
 export const getCurrentLocation = (): Promise<Location> => {
   return new Promise((resolve, reject) => {
@@ -79,27 +83,8 @@ export const getCurrentLocation = (): Promise<Location> => {
 };
 
 export const getWeatherData = async (location: Location, ldClient?: any): Promise<WeatherData> => {
-  if (!OPENWEATHER_API_KEY) {
-    // Return mock data if no API key is provided
-    weatherDebug.updateRequestInfo('No API request (Mock Mode)', 'Mock Data', 0);
-    const mockData = {
-      temperature: 22,
-      description: 'Sunny',
-      location: 'Demo City, XX',
-      humidity: 65,
-      windSpeed: 12,
-      icon: '01d',
-    };
-
-    // Re-identify with LaunchDarkly using the mock location context and night time detection
-    if (ldClient && mockData.location) {
-      reIdentifyWithLocation(ldClient, mockData.location, mockData.icon);
-    }
-
-    return mockData;
-  }
-
-  const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lon}&appid=${OPENWEATHER_API_KEY}&units=metric`;
+  // Use backend API proxy instead of calling OpenWeatherMap directly
+  const apiUrl = `${API_BASE_URL}/api/weather?lat=${location.lat}&lon=${location.lon}`;
   const startTime = Date.now();
 
   try {
@@ -110,11 +95,11 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
       weatherDebug.updateRequestInfo(apiUrl, `HTTP ${response.status}`, responseTime);
       
       // Handle specific API errors
-      if (response.status === 401) {
-        const errorData = await response.json().catch(() => ({ message: 'Invalid API key' }));
+      if (response.status === 401 || response.status === 500) {
+        const errorData = await response.json().catch(() => ({ message: 'API configuration error' }));
         const apiError: WeatherAPIError = {
-          code: 401,
-          message: errorData.message || 'Invalid API key',
+          code: response.status,
+          message: errorData.message || 'Weather service temporarily unavailable',
           type: 'API_KEY_INVALID'
         };
         throw apiError;
@@ -129,17 +114,13 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
       throw genericError;
     }
 
-    const data = await response.json();
+    const weatherData = await response.json();
     weatherDebug.updateRequestInfo(apiUrl, `Success (${response.status})`, responseTime);
 
-    const weatherData = {
-      temperature: Math.round(data.main.temp),
-      description: data.weather[0].description,
-      location: `${data.name}, ${data.sys.country}`,
-      humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
-      icon: data.weather[0].icon,
-    };
+    // Check if we received mock data
+    if (weatherData.mockData) {
+      weatherDebug.updateRequestInfo(apiUrl, 'Success (Mock Data)', responseTime);
+    }
 
     // Update location info with actual city name from API
     weatherDebug.updateLocationInfo(

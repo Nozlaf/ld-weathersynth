@@ -21,7 +21,19 @@
     "build": "react-scripts build",
     "serve": "serve -s build -l 3002",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "cd server && npm start",
+    "server:dev": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server:dev\" \"npm start\"",
+    "build:all": "npm run build && cd server && npm ci --only=production",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop weather-synth",
+    "pm2:restart": "pm2 restart weather-synth",
+    "pm2:reload": "pm2 reload weather-synth",
+    "pm2:delete": "pm2 delete weather-synth",
+    "pm2:logs": "pm2 logs weather-synth",
+    "pm2:status": "pm2 status",
+    "pm2:prod": "pm2 start ecosystem.config.js --env production"
   },
   "eslintConfig": {
     "extends": [
@@ -43,6 +55,7 @@
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
-    "serve": "^14.2.4"
+    "serve": "^14.2.4",
+    "concurrently": "^8.2.2"
   }
 }

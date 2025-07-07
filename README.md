@@ -66,6 +66,90 @@ A beautiful, retro-styled weather application with a terminal aesthetic, inspire
 5. **Open your browser**
    Visit [http://localhost:3000](http://localhost:3000)
 
+## 🔄 Production Deployment with PM2
+
+For production deployment, you can use PM2 (Process Manager 2) to manage the Node.js backend server:
+
+### PM2 Setup
+
+1. **Install PM2 globally**
+   ```bash
+   npm install -g pm2
+   ```
+
+2. **Build the application**
+   ```bash
+   npm run build:all
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   # Create .env file for production
+   OPENWEATHER_API_KEY=your_api_key_here
+   NODE_ENV=production
+   PORT=3001
+   ```
+
+4. **Start with PM2**
+   ```bash
+   # Start in production mode
+   npm run pm2:prod
+   
+   # Or start in development mode
+   npm run pm2:start
+   ```
+
+### PM2 Management Commands
+
+```bash
+# View running processes
+npm run pm2:status
+
+# View real-time logs
+npm run pm2:logs
+
+# Restart the application
+npm run pm2:restart
+
+# Graceful reload (zero downtime)
+npm run pm2:reload
+
+# Stop the application
+npm run pm2:stop
+
+# Remove from PM2
+npm run pm2:delete
+```
+
+### PM2 Features
+
+- **Process Management**: Automatic restart on crashes
+- **Zero Downtime Deployment**: Graceful reloads
+- **Log Management**: Centralized logging with rotation
+- **Monitoring**: CPU and memory usage tracking
+- **Clustering**: Can run multiple instances (currently configured for 1)
+
+### Configuration
+
+The PM2 configuration is defined in `ecosystem.config.js`:
+
+```javascript
+{
+  name: 'weather-synth',
+  script: 'server/server.js',
+  env: {
+    NODE_ENV: 'development',
+    PORT: 3001
+  },
+  env_production: {
+    NODE_ENV: 'production',
+    PORT: 3001
+  }
+}
+```
+
+**Access the application:** `http://localhost:3001`
+
 ## 🔄 Changelog
 
 ### Version 1.1.0 - Latest Release
@@ -151,11 +235,13 @@ The debug panel helps troubleshoot flag configuration and verify that LaunchDark
 
 ## 🌤️ Weather API Setup
 
-The app uses OpenWeatherMap for weather data:
+The app uses OpenWeatherMap for weather data via a secure backend API:
 
 1. Sign up at [openweathermap.org](https://openweathermap.org/api)
 2. Get your free API key
-3. Add it to your `.env` file as `REACT_APP_OPENWEATHER_API_KEY`
+3. Add it to your `.env` file as `OPENWEATHER_API_KEY` (server-side)
+
+**Security Note:** The API key is now handled server-side for security. It's never exposed to the client.
 
 **Note:** The app will work with demo data if no API key is provided.
 
