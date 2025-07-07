@@ -68,6 +68,13 @@
   --qr-glow: #f472b6;
 }
 
+.qr-code-display.winter {
+  --qr-bg: rgba(240, 249, 255, 0.95);
+  --qr-border: #3b82f6;
+  --qr-text: #3b82f6;
+  --qr-glow: #3b82f6;
+}
+
 .qr-code-container {
   background: var(--qr-bg);
   border: 2px solid var(--qr-border);
@@ -104,6 +111,12 @@
   box-shadow: 
     0 0 20px rgba(244, 114, 182, 0.4),
     inset 0 0 20px rgba(244, 114, 182, 0.1);
+}
+
+.qr-code-display.winter .qr-code-container {
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.4),
+    inset 0 0 20px rgba(59, 130, 246, 0.1);
 }
 
 .qr-code-display.light .qr-code-container {

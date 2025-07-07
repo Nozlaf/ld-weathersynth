@@ -79,6 +79,14 @@
   --modal-text-accent: #ec4899;
 }
 
+.options-modal.winter {
+  --modal-bg: #f0f9ff;
+  --modal-border: #3b82f6;
+  --modal-text-primary: #1e3a8a;
+  --modal-text-secondary: #3b82f6;
+  --modal-text-accent: #2563eb;
+}
+
 .options-terminal-frame {
   background: var(--modal-bg);
   border: 3px solid var(--modal-border);
@@ -132,6 +140,12 @@
     inset 0 0 20px rgba(244, 114, 182, 0.1);
 }
 
+.options-modal.winter .options-terminal-frame {
+  box-shadow: 
+    0 0 20px var(--modal-border),
+    inset 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
 .options-terminal-header {
   padding: 12px 20px;
   display: flex;
@@ -167,6 +181,10 @@
 
 .options-modal.sakura .options-terminal-header {
   background: linear-gradient(135deg, var(--modal-border), rgba(244, 114, 182, 0.8));
+}
+
+.options-modal.winter .options-terminal-header {
+  background: linear-gradient(135deg, var(--modal-border), rgba(59, 130, 246, 0.8));
 }
 
 .options-terminal-title {
@@ -624,6 +642,16 @@
     transparent 2px,
     rgba(244, 114, 182, 0.1) 2px,
     rgba(244, 114, 182, 0.1) 4px
+  );
+}
+
+.options-modal.winter .options-scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(59, 130, 246, 0.1) 2px,
+    rgba(59, 130, 246, 0.1) 4px
   );
 }
 

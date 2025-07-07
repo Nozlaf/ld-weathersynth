@@ -30,6 +30,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         return 'dark-grayscale';
       case 'sakura':
         return 'sakura';
+      case 'winter':
+        return 'winter';
       default:
         console.warn(`ThemeProvider - Unknown LaunchDarkly theme value: ${ldTheme}, falling back to dark-synth`);
         return 'dark-synth';
@@ -121,6 +123,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           case 'dark-grayscale':
             return 'sakura';
           case 'sakura':
+            return 'winter';
+          case 'winter':
             return 'dark-synth';
           default:
             return 'dark-synth';

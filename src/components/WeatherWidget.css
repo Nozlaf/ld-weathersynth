@@ -71,6 +71,16 @@
   --sakura-text-accent: #ec4899;
   --sakura-border: #f472b6;
   --sakura-glow: #f472b6;
+
+  /* Winter theme */
+  --winter-bg-primary: #f0f9ff;
+  --winter-bg-secondary: #e0f2fe;
+  --winter-bg-terminal: #f0f9ff;
+  --winter-text-primary: #1e3a8a;
+  --winter-text-secondary: #3b82f6;
+  --winter-text-accent: #2563eb;
+  --winter-border: #3b82f6;
+  --winter-glow: #60a5fa;
 }
 
 .weather-widget {
@@ -247,6 +257,73 @@
   animation: sakura-fall-2 25s linear infinite, sakura-sway-2 6s ease-in-out infinite alternate;
 }
 
+/* Winter theme */
+.weather-widget.winter {
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(96, 165, 250, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, var(--winter-bg-primary) 0%, var(--winter-bg-secondary) 100%);
+  color: var(--winter-text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated Winter snowflakes - Multiple layers for realistic effect */
+.weather-widget.winter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: 
+    /* Layer 1 - Fast falling snowflakes */
+    radial-gradient(3px 3px at 25px 35px, rgba(255, 255, 255, 0.9) 50%, transparent 51%),
+    radial-gradient(4px 4px at 45px 75px, rgba(219, 234, 254, 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 95px 45px, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(3px 3px at 135px 85px, rgba(219, 234, 254, 0.6) 50%, transparent 51%),
+    radial-gradient(4px 4px at 165px 35px, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+    /* Layer 2 - Medium speed snowflakes */
+    radial-gradient(2px 2px at 205px 55px, rgba(219, 234, 254, 0.7) 50%, transparent 51%),
+    radial-gradient(3px 3px at 255px 25px, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(2px 2px at 305px 65px, rgba(219, 234, 254, 0.8) 50%, transparent 51%),
+    radial-gradient(4px 4px at 355px 45px, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    /* Layer 3 - Slow floating snowflakes */
+    radial-gradient(2px 2px at 405px 35px, rgba(219, 234, 254, 0.4) 50%, transparent 51%),
+    radial-gradient(3px 3px at 455px 75px, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 505px 55px, rgba(219, 234, 254, 0.5) 50%, transparent 51%);
+  background-repeat: repeat;
+  background-size: 180px 180px, 250px 250px, 160px 160px, 200px 200px, 190px 190px,
+                   220px 220px, 200px 200px, 170px 170px, 210px 210px,
+                   260px 260px, 150px 150px, 240px 240px;
+  animation: winter-snow-1 18s linear infinite, winter-drift 10s ease-in-out infinite alternate;
+}
+
+/* Additional snowflake layers using before pseudo-element */
+.weather-widget.winter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    /* Different layer with offset timing */
+    radial-gradient(2px 2px at 65px 25px, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(3px 3px at 125px 65px, rgba(219, 234, 254, 0.4) 50%, transparent 51%),
+    radial-gradient(2px 2px at 185px 45px, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(4px 4px at 245px 85px, rgba(219, 234, 254, 0.5) 50%, transparent 51%),
+    radial-gradient(2px 2px at 325px 15px, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+    radial-gradient(3px 3px at 385px 55px, rgba(219, 234, 254, 0.6) 50%, transparent 51%);
+  background-repeat: repeat;
+  background-size: 140px 140px, 180px 180px, 160px 160px, 200px 200px, 130px 130px, 210px 210px;
+  animation: winter-snow-2 22s linear infinite, winter-drift-2 7s ease-in-out infinite alternate;
+}
+
 .terminal-frame {
   background: var(--bg-terminal);
   border: 3px solid var(--border);
@@ -340,6 +417,17 @@
   --glow: var(--sakura-glow);
 }
 
+.weather-widget.winter {
+  --bg-primary: var(--winter-bg-primary);
+  --bg-secondary: var(--winter-bg-secondary);
+  --bg-terminal: var(--winter-bg-terminal);
+  --text-primary: var(--winter-text-primary);
+  --text-secondary: var(--winter-text-secondary);
+  --text-accent: var(--winter-text-accent);
+  --border: var(--winter-border);
+  --glow: var(--winter-glow);
+}
+
 /* Light theme specific overrides */
 .weather-widget.light .terminal-frame {
   box-shadow: 
@@ -366,6 +454,13 @@
   box-shadow: 
     0 0 30px var(--glow),
     inset 0 0 30px rgba(244, 114, 182, 0.1);
+}
+
+/* Winter theme specific overrides */
+.weather-widget.winter .terminal-frame {
+  box-shadow: 
+    0 0 30px var(--glow),
+    inset 0 0 30px rgba(96, 165, 250, 0.1);
 }
 
 .terminal-header {
@@ -694,6 +789,16 @@
   );
 }
 
+.weather-widget.winter .scan-lines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(219, 234, 254, 0.1) 2px,
+    rgba(219, 234, 254, 0.1) 4px
+  );
+}
+
 .screen-flicker {
   background: var(--bg-terminal);
   height: 100%;
@@ -769,6 +874,39 @@
   100% { 
     transform: translateX(5px) rotate(0deg);
   }
+}
+
+/* Winter theme snowflake animations */
+@keyframes winter-snow-1 {
+  0% { 
+    transform: translateY(-100px) rotate(0deg);
+    background-position: 0% 0%;
+  }
+  100% { 
+    transform: translateY(calc(100vh + 100px)) rotate(360deg);
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes winter-snow-2 {
+  0% { 
+    transform: translateY(-150px) rotate(0deg);
+    background-position: 0% 0%;
+  }
+  100% { 
+    transform: translateY(calc(100vh + 150px)) rotate(270deg);
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes winter-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(10px); }
+}
+
+@keyframes winter-drift-2 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-5px); }
 }
 
 /* Responsive design */

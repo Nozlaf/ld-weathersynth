@@ -107,6 +107,11 @@ resource "launchdarkly_feature_flag" "default_theme" {
     name        = "Sakura Blossom"
     description = "Retro-futuristic with animated falling cherry blossom petals"
   }
+  variations {
+    value       = "winter"
+    name        = "Winter Wonderland"
+    description = "Icy blue theme with animated falling snowflakes"
+  }
 
   defaults {
     on_variation  = 0  # "dark" (maps to dark-synth)

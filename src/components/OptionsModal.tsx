@@ -114,12 +114,13 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
       'light': 'Light',
       'grayscale': 'Grayscale',
       'dark-grayscale': 'Dark Grayscale',
-      'sakura': 'Sakura Blossom'
+      'sakura': 'Sakura Blossom',
+      'winter': 'Winter Wonderland'
     };
     return themeNames[themeKey] || themeKey;
   };
 
-  const themes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura'];
+  const themes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura', 'winter'];
 
   return (
     <div className="options-modal-backdrop" onClick={handleBackdropClick}>

@@ -116,6 +116,7 @@ The `default-theme` flag accepts the following values:
 | `"grayscale"` | **Grayscale** | Monochrome terminal aesthetic |
 | `"dark-grayscale"` | **Dark Grayscale** | Dark monochrome with light and dark grey elements |
 | `"sakura"` | **Sakura Blossom** | Retro-futuristic with animated falling cherry blossom petals |
+| `"winter"` | **Winter Wonderland** | Icy blue theme with animated falling snowflakes |
 
 **Note:** The app also supports manual theme selection via the Options panel, which overrides the LaunchDarkly flag.
 
@@ -244,6 +245,14 @@ The app uses OpenWeatherMap for weather data:
 - Background: Soft pink gradients (#fdf2f8, #fce7f3)
 - Style: Retro-futuristic with animated falling cherry blossom petals
 - Special Feature: Realistic animated sakura petals (3px-5px) continuously fall and drift across the screen with natural swaying motion and multiple animation layers for depth
+
+**Winter Wonderland Theme** ❄️
+- Primary: Deep blue (#1e3a8a)
+- Secondary: Blue (#3b82f6)
+- Accent: Bright blue (#2563eb)
+- Background: Light blue gradients (#f0f9ff, #e0f2fe)
+- Style: Icy blue theme with clean winter aesthetics
+- Special Feature: Realistic animated snowflakes (2px-4px) continuously fall and drift across the screen with natural floating motion and multiple animation layers for depth
 
 ### Typography
 
