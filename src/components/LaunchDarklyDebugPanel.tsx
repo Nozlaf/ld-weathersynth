@@ -32,6 +32,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
   const ldClient = useLDClient();
   const { theme } = useTheme();
   const [flags, setFlags] = useState<{ [key: string]: any }>({});
+  const [serverSideFlags, setServerSideFlags] = useState<{ [key: string]: any }>({});
   const [context, setContext] = useState<any>(null);
   const [sdkState, setSdkState] = useState<string>('Unknown');
   const [recordingState, setRecordingState] = useState<string>('Unknown');
@@ -58,8 +59,30 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     throw new Error(`Test error from debug panel - LaunchDarkly error tracking test | ${location} | ${userKey}`);
   }
 
+  // Function to fetch server-side flags
+  const fetchServerSideFlags = async () => {
+    try {
+      const currentContext = createLDContext();
+      const params = new URLSearchParams({
+        userKey: currentContext.key,
+        userName: currentContext.name || 'Debug User',
+        ...(currentContext.email && { userEmail: currentContext.email })
+      });
+      
+      const response = await fetch(`/api/debug/weather-provider?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setServerSideFlags(data);
+      } else {
+        console.warn('Failed to fetch server-side flags:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching server-side flags:', error);
+    }
+  };
+
   useEffect(() => {
-    if (!ldClient || !isVisible) return;
+    if (!isVisible) return;
 
     // Get SDK state
     const updateSdkState = () => {
@@ -86,7 +109,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
           setRecordingState('Error');
         }
         
-        // Get all flags
+        // Get client-side flags (excluding server-side only flags)
         try {
           const flagKeys = [
             'default-theme',
@@ -95,7 +118,9 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
             'weather-refresh-interval', 
             'enable-animations',
             'show-extra-weather-info',
-            'debug-mode'
+            'debug-mode',
+            'show-moon-phase',
+            'enable-sakura-theme'
           ];
           
           const flagValues: { [key: string]: any } = {};
@@ -143,6 +168,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     updateSdkState();
     updateWeatherDebug();
     updateLocationSimulation();
+    fetchServerSideFlags(); // Fetch server-side flags
 
     // Subscribe to location simulation changes
     const unsubscribeLocation = locationSimulationService.subscribe(updateLocationSimulation);
@@ -151,6 +177,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     const flagChangeHandler = () => {
       updateSdkState();
       updateWeatherDebug();
+      fetchServerSideFlags(); // Re-fetch server-side flags when flags change
     };
     ldClient?.on('change', flagChangeHandler);
 
@@ -523,6 +550,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
         isVisible={showFeatureFlagsModal}
         onClose={() => setShowFeatureFlagsModal(false)}
         flags={flags}
+        serverSideFlags={serverSideFlags}
       />
     </div>
   );

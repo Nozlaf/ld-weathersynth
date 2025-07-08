@@ -124,13 +124,14 @@ setInterval(cleanupExpiredCache, 30 * 60 * 1000);
 
 /**
  * Get weather provider configuration from LaunchDarkly feature flag
- * Default format: {"primary": "openweathermap", "fallback": "open-meteo"}
+ * New format: {"primary": "visual-crossing", "fallbacks": ["openweathermap", "open-meteo"]}
+ * Legacy format: {"primary": "visual-crossing", "fallback": "open-meteo"}
  */
 const getWeatherProviderConfig = (ldFlag = null) => {
-  // Default configuration
+  // Default configuration with multiple fallbacks
   const defaultConfig = {
-    primary: 'visual-crossing',
-    fallback: 'open-meteo'
+    primary: 'openweathermap',
+    fallbacks: ['open-meteo', 'visual-crossing']
   };
 
   // If no LaunchDarkly flag provided, return default
@@ -144,10 +145,27 @@ const getWeatherProviderConfig = (ldFlag = null) => {
     
     // Validate configuration structure
     if (config && typeof config === 'object' && config.primary) {
-      return {
-        primary: config.primary,
-        fallback: config.fallback || 'open-meteo'
-      };
+      // Handle new array format
+      if (config.fallbacks && Array.isArray(config.fallbacks)) {
+        return {
+          primary: config.primary,
+          fallbacks: config.fallbacks
+        };
+      }
+      // Handle legacy single fallback format for backward compatibility
+      else if (config.fallback) {
+        return {
+          primary: config.primary,
+          fallbacks: [config.fallback]
+        };
+      }
+      // If no fallbacks specified, use default
+      else {
+        return {
+          primary: config.primary,
+          fallbacks: defaultConfig.fallbacks
+        };
+      }
     }
   } catch (error) {
     console.warn('Invalid weather provider configuration from LaunchDarkly, using default:', error);
@@ -207,21 +225,66 @@ const getWeatherWithFallback = async (lat, lon, ldFlag = null, userContext = nul
     console.log(`Primary provider ${config.primary} not available`);
   }
 
-  // Try fallback provider
-  if (config.fallback && availableProviders.includes(config.fallback)) {
+  // Try each fallback provider in order
+  if (config.fallbacks && Array.isArray(config.fallbacks)) {
+    for (let i = 0; i < config.fallbacks.length; i++) {
+      const fallbackProvider = config.fallbacks[i];
+      
+      if (availableProviders.includes(fallbackProvider)) {
+        try {
+          console.log(`Attempting to use fallback provider ${i + 1}/${config.fallbacks.length}: ${fallbackProvider}`);
+          const upstreamStartTime = Date.now();
+          const data = await weatherProviders.getWeather(fallbackProvider, lat, lon);
+          const upstreamLatency = Date.now() - upstreamStartTime;
+          
+          console.log(`Successfully fetched weather from fallback provider: ${fallbackProvider} (${upstreamLatency}ms)`);
+          
+          // Track upstream latency to LaunchDarkly
+          trackMetric('upstream_latency', userContext, {
+            latency_ms: upstreamLatency,
+            provider: fallbackProvider,
+            provider_type: `fallback-${i + 1}`,
+            success: true,
+            location: `${lat},${lon}`,
+            timestamp: new Date().toISOString()
+          });
+          
+          return { ...data, upstreamLatency };
+        } catch (error) {
+          const upstreamLatency = Date.now() - Date.now(); // Approximate error latency
+          console.error(`Fallback provider ${fallbackProvider} failed:`, error.message);
+          
+          // Track failed upstream latency
+          trackMetric('upstream_latency', userContext, {
+            latency_ms: upstreamLatency,
+            provider: fallbackProvider,
+            provider_type: `fallback-${i + 1}`,
+            success: false,
+            error: error.message,
+            location: `${lat},${lon}`,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        console.log(`Fallback provider ${fallbackProvider} not available`);
+      }
+    }
+  }
+  // Legacy support for single fallback
+  else if (config.fallback && availableProviders.includes(config.fallback)) {
     try {
-      console.log(`Attempting to use fallback provider: ${config.fallback}`);
+      console.log(`Attempting to use legacy fallback provider: ${config.fallback}`);
       const upstreamStartTime = Date.now();
       const data = await weatherProviders.getWeather(config.fallback, lat, lon);
       const upstreamLatency = Date.now() - upstreamStartTime;
       
-      console.log(`Successfully fetched weather from fallback provider: ${config.fallback} (${upstreamLatency}ms)`);
+      console.log(`Successfully fetched weather from legacy fallback provider: ${config.fallback} (${upstreamLatency}ms)`);
       
       // Track upstream latency to LaunchDarkly
       trackMetric('upstream_latency', userContext, {
         latency_ms: upstreamLatency,
         provider: config.fallback,
-        provider_type: 'fallback',
+        provider_type: 'fallback-legacy',
         success: true,
         location: `${lat},${lon}`,
         timestamp: new Date().toISOString()
@@ -230,26 +293,27 @@ const getWeatherWithFallback = async (lat, lon, ldFlag = null, userContext = nul
       return { ...data, upstreamLatency };
     } catch (error) {
       const upstreamLatency = Date.now() - Date.now(); // Approximate error latency
-      console.error(`Fallback provider ${config.fallback} failed:`, error.message);
+      console.error(`Legacy fallback provider ${config.fallback} failed:`, error.message);
       
       // Track failed upstream latency
       trackMetric('upstream_latency', userContext, {
         latency_ms: upstreamLatency,
         provider: config.fallback,
-        provider_type: 'fallback',
+        provider_type: 'fallback-legacy',
         success: false,
         error: error.message,
         location: `${lat},${lon}`,
         timestamp: new Date().toISOString()
       });
     }
-  } else if (config.fallback) {
-    console.log(`Fallback provider ${config.fallback} not available`);
   }
 
-  // If both primary and fallback fail, try any available provider
+  // If primary and all fallbacks fail, try any remaining available provider
+  const configuredProviders = [config.primary, ...(config.fallbacks || [])];
+  if (config.fallback) configuredProviders.push(config.fallback); // Include legacy fallback
+  
   for (const provider of availableProviders) {
-    if (provider !== config.primary && provider !== config.fallback) {
+    if (!configuredProviders.includes(provider)) {
       try {
         console.log(`Attempting to use emergency provider: ${provider}`);
         const upstreamStartTime = Date.now();
@@ -412,11 +476,30 @@ app.get('/api/weather', rateLimit, async (req, res) => {
     
     console.log(`Cache miss for ${cacheKey}, fetching weather data using configured providers`);
     
-    // Get weather provider configuration from LaunchDarkly flag (if provided)
-    // In a real implementation, you would fetch this from LaunchDarkly here
-    // For now, we'll use a default configuration or environment variable
-    const weatherProviderFlag = process.env.WEATHER_PROVIDER_CONFIG ? 
-      JSON.parse(process.env.WEATHER_PROVIDER_CONFIG) : null;
+    // Get weather provider configuration from LaunchDarkly flag
+    let weatherProviderFlag = null;
+    if (ldClient) {
+      try {
+        const ldContext = {
+          kind: 'user',
+          key: userContext.key,
+          name: userContext.name,
+          email: userContext.email
+        };
+        weatherProviderFlag = await ldClient.variation('weather-api-provider', ldContext, null);
+      } catch (error) {
+        console.warn('Failed to fetch weather-api-provider flag from LaunchDarkly:', error.message);
+      }
+    }
+    
+    // Fallback to environment variable if LaunchDarkly flag not available
+    if (!weatherProviderFlag && process.env.WEATHER_PROVIDER_CONFIG) {
+      try {
+        weatherProviderFlag = JSON.parse(process.env.WEATHER_PROVIDER_CONFIG);
+      } catch (error) {
+        console.warn('Failed to parse WEATHER_PROVIDER_CONFIG:', error.message);
+      }
+    }
     
     // Get weather data using the configured providers with fallback
     const weatherData = await getWeatherWithFallback(latitude, longitude, weatherProviderFlag, userContext);
@@ -685,7 +768,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API status endpoint (for debugging - doesn't expose the keys)
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
   // Get available weather providers
   const availableProviders = weatherProviders.getAvailableProviders();
   const allProviders = Object.keys(weatherProviders.providers);
@@ -702,8 +785,35 @@ app.get('/api/status', (req, res) => {
   });
   
   // Get current weather provider configuration
-  const weatherProviderFlag = process.env.WEATHER_PROVIDER_CONFIG ? 
-    JSON.parse(process.env.WEATHER_PROVIDER_CONFIG) : null;
+  let weatherProviderFlag = null;
+  let configSource = 'Default';
+  
+  if (ldClient) {
+    try {
+      const ldContext = {
+        kind: 'user',
+        key: 'debug-user',
+        name: 'Debug User'
+      };
+      weatherProviderFlag = await ldClient.variation('weather-api-provider', ldContext, null);
+      if (weatherProviderFlag) {
+        configSource = 'LaunchDarkly';
+      }
+    } catch (error) {
+      console.warn('Failed to fetch weather-api-provider flag for status:', error.message);
+    }
+  }
+  
+  // Fallback to environment variable if LaunchDarkly flag not available
+  if (!weatherProviderFlag && process.env.WEATHER_PROVIDER_CONFIG) {
+    try {
+      weatherProviderFlag = JSON.parse(process.env.WEATHER_PROVIDER_CONFIG);
+      configSource = 'Environment Variable';
+    } catch (error) {
+      console.warn('Failed to parse WEATHER_PROVIDER_CONFIG for status:', error.message);
+    }
+  }
+  
   const currentConfig = getWeatherProviderConfig(weatherProviderFlag);
   
   // Get cache statistics
@@ -739,7 +849,7 @@ app.get('/api/status', (req, res) => {
       all: allProviders,
       status: providerStatus,
       currentConfig: currentConfig,
-      configSource: process.env.WEATHER_PROVIDER_CONFIG ? 'Environment Variable' : 'Default'
+      configSource: configSource
     },
     rateLimit: {
       window: RATE_LIMIT_WINDOW,
@@ -800,6 +910,62 @@ app.get('/api/weather/cache', (req, res) => {
     entries: cachedEntries,
     retrievedAt: new Date().toISOString()
   });
+});
+
+// Debug endpoint for weather provider configuration (for client-side debug panel)
+app.get('/api/debug/weather-provider', async (req, res) => {
+  try {
+    const { userKey, userName, userEmail } = req.query;
+    
+    // Get weather provider configuration from LaunchDarkly flag
+    let weatherProviderFlag = null;
+    let configSource = 'Default';
+    
+    if (ldClient) {
+      try {
+        const ldContext = {
+          kind: 'user',
+          key: userKey || 'debug-user',
+          name: userName || 'Debug User',
+          email: userEmail || undefined
+        };
+        weatherProviderFlag = await ldClient.variation('weather-api-provider', ldContext, null);
+        if (weatherProviderFlag) {
+          configSource = 'LaunchDarkly';
+        }
+      } catch (error) {
+        console.warn('Failed to fetch weather-api-provider flag for debug:', error.message);
+      }
+    }
+    
+    // Fallback to environment variable if LaunchDarkly flag not available
+    if (!weatherProviderFlag && process.env.WEATHER_PROVIDER_CONFIG) {
+      try {
+        weatherProviderFlag = JSON.parse(process.env.WEATHER_PROVIDER_CONFIG);
+        configSource = 'Environment Variable';
+      } catch (error) {
+        console.warn('Failed to parse WEATHER_PROVIDER_CONFIG for debug:', error.message);
+      }
+    }
+    
+    const currentConfig = getWeatherProviderConfig(weatherProviderFlag);
+    
+    res.json({
+      'weather-api-provider': {
+        value: currentConfig,
+        source: configSource,
+        rawFlag: weatherProviderFlag,
+        ldClientConnected: !!ldClient,
+        hasEnvFallback: !!process.env.WEATHER_PROVIDER_CONFIG
+      }
+    });
+  } catch (error) {
+    console.error('Debug weather provider endpoint error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch weather provider configuration',
+      message: error.message
+    });
+  }
 });
 
 // Serve static files from React build

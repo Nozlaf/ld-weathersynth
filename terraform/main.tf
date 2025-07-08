@@ -425,29 +425,34 @@ resource "launchdarkly_feature_flag" "weather_api_provider" {
 
   variation_type = "json"
   variations {
-    value       = jsonencode({"primary": "openweathermap", "fallback": "open-meteo"})
-    name        = "OpenWeatherMap + Open-Meteo"
-    description = "Primary: OpenWeatherMap, Fallback: Open-Meteo (free)"
+    value       = jsonencode({"primary": "openweathermap", "fallbacks": ["open-meteo", "visual-crossing"]})
+    name        = "OpenWeatherMap + Fallbacks"
+    description = "Primary: OpenWeatherMap, Fallbacks: Open-Meteo (free), Visual Crossing"
   }
   variations {
-    value       = jsonencode({"primary": "tomorrow-io", "fallback": "openweathermap"})
-    name        = "Tomorrow.io + OpenWeatherMap"
-    description = "Primary: Tomorrow.io, Fallback: OpenWeatherMap"
+    value       = jsonencode({"primary": "tomorrow-io", "fallbacks": ["openweathermap", "open-meteo", "visual-crossing"]})
+    name        = "Tomorrow.io + Multiple Fallbacks"
+    description = "Primary: Tomorrow.io, Fallbacks: OpenWeatherMap, Open-Meteo, Visual Crossing"
   }
   variations {
-    value       = jsonencode({"primary": "weatherapi", "fallback": "open-meteo"})
-    name        = "WeatherAPI + Open-Meteo"
-    description = "Primary: WeatherAPI.com, Fallback: Open-Meteo (free)"
+    value       = jsonencode({"primary": "weatherapi", "fallbacks": ["openweathermap", "open-meteo", "visual-crossing"]})
+    name        = "WeatherAPI + Multiple Fallbacks"
+    description = "Primary: WeatherAPI.com, Fallbacks: OpenWeatherMap, Open-Meteo, Visual Crossing"
   }
   variations {
-    value       = jsonencode({"primary": "visual-crossing", "fallback": "open-meteo"})
-    name        = "Visual Crossing + Open-Meteo"
-    description = "Primary: Visual Crossing, Fallback: Open-Meteo (free)"
+    value       = jsonencode({"primary": "visual-crossing", "fallbacks": ["openweathermap", "open-meteo"]})
+    name        = "Visual Crossing + Fallbacks"
+    description = "Primary: Visual Crossing, Fallbacks: OpenWeatherMap, Open-Meteo (free)"
   }
   variations {
-    value       = jsonencode({"primary": "open-meteo", "fallback": "openweathermap"})
-    name        = "Open-Meteo + OpenWeatherMap"
-    description = "Primary: Open-Meteo (free), Fallback: OpenWeatherMap"
+    value       = jsonencode({"primary": "open-meteo", "fallbacks": ["openweathermap", "visual-crossing"]})
+    name        = "Open-Meteo + Fallbacks"
+    description = "Primary: Open-Meteo (free), Fallbacks: OpenWeatherMap, Visual Crossing"
+  }
+  variations {
+    value       = jsonencode({"primary": "openweathermap", "fallbacks": ["tomorrow-io", "weatherapi", "open-meteo", "visual-crossing"]})
+    name        = "OpenWeatherMap + All Fallbacks"
+    description = "Primary: OpenWeatherMap, Fallbacks: Tomorrow.io, WeatherAPI, Open-Meteo, Visual Crossing"
   }
 
   defaults {
@@ -562,9 +567,9 @@ resource "launchdarkly_feature_flag_environment" "weather_api_provider_productio
   env_key      = "production"
   on           = false
   fallthrough {
-    variation = 0  # OpenWeatherMap + Open-Meteo
+    variation = 0  # OpenWeatherMap + Fallbacks
   }
-  off_variation = 0  # OpenWeatherMap + Open-Meteo
+  off_variation = 0  # OpenWeatherMap + Fallbacks
 }
 
 # Test Environment Flag States
@@ -663,9 +668,9 @@ resource "launchdarkly_feature_flag_environment" "weather_api_provider_test" {
   env_key      = "test"
   on           = false
   fallthrough {
-    variation = 0  # OpenWeatherMap + Open-Meteo
+    variation = 0  # OpenWeatherMap + Fallbacks
   }
-  off_variation = 0  # OpenWeatherMap + Open-Meteo
+  off_variation = 0  # OpenWeatherMap + Fallbacks
 }
 
 # Custom Metric for Theme Changes (based on existing metric)
@@ -705,5 +710,6 @@ output "feature_flags" {
     debug_mode             = launchdarkly_feature_flag.debug_mode.key
     show_moon_phase = launchdarkly_feature_flag.show_moon_phase.key
     enable_sakura_theme     = launchdarkly_feature_flag.enable_sakura_theme.key
+    weather_api_provider    = launchdarkly_feature_flag.weather_api_provider.key
   }
 } 
