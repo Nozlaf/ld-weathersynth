@@ -201,6 +201,16 @@ The `default-theme` flag accepts the following values:
 | `"dark-grayscale"` | **Dark Grayscale** | Dark monochrome with light and dark grey elements |
 | `"sakura"` | **Sakura Blossom** | Retro-futuristic with animated falling cherry blossom petals |
 | `"winter"` | **Winter Wonderland** | Icy blue theme with animated falling snowflakes |
+| `"heart-of-gold"` | **Heart of Gold** | Ultimate minimalist theme: "black on black with black light" |
+
+**Theme Features:**
+- **Animated effects** - Sakura and Winter themes include realistic particle animations
+- **Manual override** - Options panel selection overrides LaunchDarkly flags  
+- **Theme persistence** - Selected themes are remembered across sessions
+- **Real-time switching** - Changes apply instantly without page refresh
+- **Debug testing** - Use debug panel (Cmd+K) to test all themes quickly
+- **QR code adaptation** - QR codes automatically match theme colors
+- **Icon theming** - Weather icons adapt using CSS filters per theme
 
 **Note:** The app also supports manual theme selection via the Options panel, which overrides the LaunchDarkly flag.
 
@@ -218,7 +228,7 @@ Press **`Cmd+K`** (Mac) or **`Ctrl+K`** (Windows/Linux) to open the secret Launc
 
 - **SDK Status**: Connection status and client information
 - **Feature Flags**: Real-time flag values and their current state
-- **Theme Debug**: Current theme, flag values, and theme source
+- **Theme Debug**: Current theme, flag values, theme source, and quick theme testing
 - **Context Data**: User context being sent to LaunchDarkly
 - **Weather API Debug**: API status, location method, and request details
 - **Location Simulation**: Test weather in different cities worldwide
@@ -351,10 +361,14 @@ For detailed security analysis, vulnerability assessment, and compliance recomme
 ## ✨ Key Features
 
 ### 🎭 Multiple Theme Support
-- **6 unique themes** with distinct color schemes and aesthetics
+- **9 unique themes** with distinct color schemes and aesthetics
 - **LaunchDarkly integration** for remote theme control
-- **Manual theme selection** via options panel
+- **Manual theme selection** via options panel with dropdown selector
 - **Weather icon theming** - icons adapt to theme colors using CSS filters
+- **QR code theming** - QR codes automatically match theme colors
+- **Animated theme-specific effects** - falling sakura petals and snowflakes
+- **CRT effects per theme** - scan lines and glowing borders match theme colors
+- **Smart theme tracking** - analytics for theme usage and preferences
 
 ### 🌍 Location Features
 - **Real-time geolocation** with automatic location detection
@@ -374,8 +388,10 @@ For detailed security analysis, vulnerability assessment, and compliance recomme
 - **Debug mode** - console logging controlled by LaunchDarkly flag
 - **Error boundaries** - graceful error handling with LaunchDarkly integration
 - **Performance monitoring** - LaunchDarkly Observability and Session Replay
-- **QR code display** - easy mobile access
+- **QR code display** - easy mobile access with theme-matched colors
 - **Real-time flag updates** - changes apply immediately without page refresh
+- **Theme testing** - debug panel allows quick cycling through all 9 themes
+- **Comprehensive theming** - CSS custom properties system supports easy theme development
 
 ### 🎨 Visual Effects
 - **CRT effects** - authentic retro terminal aesthetics
@@ -442,6 +458,16 @@ For detailed security analysis, vulnerability assessment, and compliance recomme
 - Background: Light blue gradients (#f0f9ff, #e0f2fe)
 - Style: Icy blue theme with clean winter aesthetics
 - Special Feature: Realistic animated snowflakes (2px-4px) continuously fall and drift across the screen with natural floating motion and multiple animation layers for depth
+
+**Heart of Gold Theme** 🖤
+- Primary: Very dark gray (#0f0f0f)
+- Secondary: Darker gray (#1a1a1a)
+- Accent: Dark gray (#2a2a2a)
+- Background: Pure black (#000000, #0a0a0a)
+- Border: Nearly black (#0a0a0a)
+- Style: Ultimate minimalist aesthetic inspired by "black on black with black light"
+- Philosophy: Nearly invisible interface that challenges users to find content in the darkness
+- Special Feature: Extremely subtle contrast for a truly minimal experience
 
 ### Typography
 
@@ -657,7 +683,9 @@ Access the live application at:
 1. Visit the app
 2. Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux) to open debug panel
 3. **Tap 10 times** in empty space to access SDK menu
-4. Click **[OPTIONS]** to explore themes and features
+4. Click **[OPTIONS]** to explore all 9 themes and features
+5. **Theme Selection**: Use the dropdown to choose from Dark Synth Pop, Light, Green CRT, Orange Plasma, Grayscale, Dark Grayscale, Sakura Blossom, Winter Wonderland, or Heart of Gold
+6. **Advanced Testing**: Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux) to open the debug panel for quick theme testing
 
 ---
 
