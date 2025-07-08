@@ -230,13 +230,13 @@ The `weather-api-provider` flag is a **server-side JSON flag** that controls whi
 
 #### Supported Provider Values
 
-| Provider Value | Service | API Key Required | Free Tier |
-|----------------|---------|------------------|-----------|
-| `"openweathermap"` | OpenWeatherMap | Yes | 1,000 calls/day |
-| `"tomorrow-io"` | Tomorrow.io | Yes | 1,000 calls/day |
-| `"weatherapi"` | WeatherAPI | Yes | 1M calls/month |
-| `"visual-crossing"` | Visual Crossing | Yes | 1,000 calls/day |
-| `"open-meteo"` | Open-Meteo | No | Unlimited |
+| Provider Value | Service | API Key Required | Free Tier | Geolocation Included |
+|----------------|---------|------------------|-----------|---------------------|
+| `"openweathermap"` | OpenWeatherMap | Yes | 1,000 calls/day | ✅ Yes |
+| `"tomorrow-io"` | Tomorrow.io | Yes | 1,000 calls/day | ✅ Yes |
+| `"weatherapi"` | WeatherAPI | Yes | 1M calls/month | ✅ Yes |
+| `"visual-crossing"` | Visual Crossing | Yes | 1,000 calls/day | ❌ No |
+| `"open-meteo"` | Open-Meteo | No | Unlimited | ❌ No |
 
 #### Example Configurations
 
@@ -280,6 +280,18 @@ WEATHER_PROVIDER_CONFIG={"primary": "visual-crossing", "fallback": "open-meteo"}
 - **Error Handling**: Graceful degradation with detailed error logging
 - **Performance Monitoring**: Tracks response times and success rates for each provider
 - **Location Enhancement**: Visual Crossing provider includes reverse geocoding for better location names
+
+#### 🔒 Privacy & Geolocation Behavior
+
+**Geolocation Data Handling:**
+- **OpenWeatherMap, Tomorrow.io, WeatherAPI**: Include user geolocation data in API requests for location-based services
+- **Visual Crossing & Open-Meteo**: Do **NOT** include user geolocation data in API requests for enhanced privacy
+
+**What this means:**
+- When using **Visual Crossing** or **Open-Meteo**, your exact location coordinates are **not sent** to the weather provider
+- The app still uses your browser's geolocation to determine your location, but only sends weather coordinates to the API
+- This provides an additional layer of privacy protection when using these providers
+- Location simulation and weather data accuracy remain unchanged regardless of geolocation inclusion
 
 #### Testing Provider Configuration
 
@@ -351,6 +363,7 @@ The app supports **5 different weather providers** with intelligent fallback and
 - **Features**: Weather analytics, historical data, forecasts
 - **Sign up**: [visualcrossing.com](https://www.visualcrossing.com/weather-api)
 - **Environment Variable**: `VISUAL_CROSSING_API_KEY`
+- **🔒 Privacy Note**: Does not include user geolocation data in API requests
 
 #### 5. **Open-Meteo** 🆓
 - **API Key Required**: No (Free!)
@@ -358,6 +371,7 @@ The app supports **5 different weather providers** with intelligent fallback and
 - **Features**: Open-source weather data, European focus
 - **No signup required**: [open-meteo.com](https://open-meteo.com/)
 - **Environment Variable**: None needed
+- **🔒 Privacy Note**: Does not include user geolocation data in API requests
 
 ### 🔧 Provider Configuration
 
