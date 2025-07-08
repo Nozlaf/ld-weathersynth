@@ -138,7 +138,7 @@ resource "launchdarkly_feature_flag" "default_temperature" {
   key         = "default-temperature"
   name        = "default-temperature"
   description = "should this be celcius or freedom units"
-  temporary   = true
+  temporary   = false
 
   variation_type = "string"
   variations {
@@ -176,7 +176,7 @@ resource "launchdarkly_feature_flag" "default_distance" {
   key         = "default-distance"
   name        = "default-distance"
   description = ""
-  temporary   = true
+  temporary   = false
 
   variation_type = "string"
   variations {
@@ -209,7 +209,7 @@ resource "launchdarkly_feature_flag" "weather_refresh_interval" {
   key         = "weather-refresh-interval"
   name        = "weather-refresh-interval"
   description = ""
-  temporary   = true
+  temporary   = false
 
   variation_type = "number"
   variations {
@@ -257,7 +257,7 @@ resource "launchdarkly_feature_flag" "enable_animations" {
   key         = "enable-animations"
   name        = "enable-animations"
   description = "Enables Animations for CRT / Weather / Theme elements"
-  temporary   = true
+  temporary   = false
 
   variation_type = "boolean"
   variations {
@@ -290,7 +290,7 @@ resource "launchdarkly_feature_flag" "show_extra_weather_info" {
   key         = "show-extra-weather-info"
   name        = "show-extra-weather-info"
   description = "Show humidity and windspeed on the screen"
-  temporary   = true
+  temporary   = false
 
   variation_type = "boolean"
   variations {
@@ -323,7 +323,7 @@ resource "launchdarkly_feature_flag" "debug_mode" {
   key         = "debug-mode"
   name        = "debug-mode"
   description = "Enable debug logging in console"
-  temporary   = true
+  temporary   = false
 
   variation_type = "boolean"
   variations {
@@ -356,7 +356,7 @@ resource "launchdarkly_feature_flag" "show_moon_phase" {
   key         = "show-moon-phase"
   name        = "show-moon-phase"
   description = "Display moon phase information in weather details section"
-  temporary   = true
+  temporary   = false
 
   variation_type = "boolean"
   variations {
@@ -389,7 +389,7 @@ resource "launchdarkly_feature_flag" "enable_sakura_theme" {
   key         = "enable-sakura-theme"
   name        = "enable-sakura-theme"
   description = "Enable the Sakura theme with animated petals in the theme selector"
-  temporary   = true
+  temporary   = false
 
   variation_type = "boolean"
   variations {
