@@ -129,7 +129,7 @@ setInterval(cleanupExpiredCache, 30 * 60 * 1000);
 const getWeatherProviderConfig = (ldFlag = null) => {
   // Default configuration
   const defaultConfig = {
-    primary: 'openweathermap',
+    primary: 'visual-crossing',
     fallback: 'open-meteo'
   };
 

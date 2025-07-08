@@ -345,22 +345,81 @@ class VisualCrossingProvider extends BaseWeatherProvider {
     }
 
     const data = await response.json();
-    return this.transformData(data);
+    return this.transformData(data, lat, lon);
   }
 
-  transformData(data) {
+  async transformData(data, lat, lon) {
     const current = data.currentConditions;
+    let location = data.resolvedAddress;
+
+    // If Visual Crossing only returns coordinates, try to get a better location name
+    // Check if location looks like coordinates (contains numbers, commas, and optional minus signs)
+    const coordinatePattern = /^-?\d+\.?\d*,-?\d+\.?\d*$/;
+    if (coordinatePattern.test(location)) {
+      try {
+        location = await this.reverseGeocode(lat, lon);
+      } catch (error) {
+        // If reverse geocoding fails, use coordinates as fallback
+        console.warn('Reverse geocoding failed, using coordinates:', error.message);
+        location = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      }
+    }
     
     return {
       temperature: Math.round(current.temp),
       description: current.conditions,
-      location: data.resolvedAddress,
+      location: location,
       humidity: current.humidity,
       windSpeed: Math.round(current.windspeed),
       icon: this.mapVisualCrossingIcon(current.icon),
       provider: this.name,
       mockData: false
     };
+  }
+
+  /**
+   * Simple reverse geocoding using OpenStreetMap Nominatim (free service)
+   * This provides a fallback when Visual Crossing doesn't return a proper location name
+   */
+  async reverseGeocode(lat, lon) {
+    try {
+      // Add a small delay to respect rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+      
+      const response = await fetch(nominatimUrl, {
+        headers: {
+          'User-Agent': 'WeatherSynthApp/1.0 (https://github.com/weather-synth/weather-synth)',
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        timeout: 5000 // 5 second timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Nominatim API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Extract location name from Nominatim response
+      if (data && data.address) {
+        const { city, town, village, county, state, country } = data.address;
+        const locationName = city || town || village || county || 'Unknown Location';
+        const stateName = state ? `, ${state}` : '';
+        const countryName = country && country !== 'United States' ? `, ${country}` : '';
+        
+        return `${locationName}${stateName}${countryName}`;
+      }
+      
+      // If no address found, return formatted coordinates
+      return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    } catch (error) {
+      console.warn('Reverse geocoding failed:', error.message);
+      // Return formatted coordinates as fallback
+      return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+    }
   }
 
   mapVisualCrossingIcon(icon) {
