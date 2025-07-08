@@ -36,7 +36,7 @@ cp terraform.tfvars.example terraform.tfvars
 ```bash
 terraform init
 terraform plan
-terraform apply
+terraform apply -parallelism=1  # Recommended to avoid API timeouts
 ```
 
 ## 🏗️ Current Infrastructure
@@ -158,12 +158,16 @@ terraform plan
 
 ### Apply Configuration
 ```bash
+# Recommended: Use parallelism=1 to avoid API timeout issues
+terraform apply -parallelism=1
+
+# Alternative: Standard apply (may experience timeouts with large configurations)
 terraform apply
 ```
 
 ### Destroy Infrastructure (⚠️ Use with caution)
 ```bash
-terraform destroy
+terraform destroy -parallelism=1
 ```
 
 ## 📁 File Structure
@@ -240,13 +244,23 @@ Error: 401 Unauthorized
 ```
 **Solution**: Verify your API token has correct permissions in `terraform.tfvars`
 
-#### 2. Resource Already Exists
+#### 2. API Timeout Errors
+```bash
+Error: failed to update flag "weather-api-provider": context deadline exceeded
+Error: Patch "https://app.launchdarkly.com/api/v2/flags/...": context deadline exceeded
+```
+**Solution**: Use `-parallelism=1` to reduce concurrent API calls:
+```bash
+terraform apply -parallelism=1
+```
+
+#### 3. Resource Already Exists
 ```bash
 Error: resource already exists
 ```
 **Solution**: This is expected since we're importing existing resources. The configuration matches your current setup.
 
-#### 3. State Drift
+#### 4. State Drift
 If Terraform detects changes between your configuration and live state:
 ```bash
 terraform refresh
