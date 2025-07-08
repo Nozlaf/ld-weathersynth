@@ -235,15 +235,96 @@ The debug panel helps troubleshoot flag configuration and verify that LaunchDark
 
 ## 🌤️ Weather API Setup
 
-The app uses OpenWeatherMap for weather data via a secure backend API:
+The app supports **5 different weather providers** with intelligent fallback and provider switching:
 
-1. Sign up at [openweathermap.org](https://openweathermap.org/api)
-2. Get your free API key
-3. Add it to your `.env` file as `OPENWEATHER_API_KEY` (server-side)
+### 🌟 Supported Providers
 
-**Security Note:** The API key is now handled server-side for security. It's never exposed to the client.
+#### 1. **OpenWeatherMap** (Default) 🌍
+- **API Key Required**: Yes
+- **Free Tier**: 1,000 calls/day
+- **Features**: Comprehensive weather data, global coverage
+- **Sign up**: [openweathermap.org](https://openweathermap.org/api)
+- **Environment Variable**: `OPENWEATHER_API_KEY`
 
-**Note:** The app will work with demo data if no API key is provided.
+#### 2. **Tomorrow.io** ⚡
+- **API Key Required**: Yes
+- **Free Tier**: 1,000 calls/day
+- **Features**: High-precision weather data, excellent accuracy
+- **Sign up**: [tomorrow.io](https://www.tomorrow.io/weather-api/)
+- **Environment Variable**: `TOMORROW_API_KEY`
+
+#### 3. **WeatherAPI** 🌦️
+- **API Key Required**: Yes
+- **Free Tier**: 1 million calls/month
+- **Features**: Real-time weather, forecasts, historical data
+- **Sign up**: [weatherapi.com](https://www.weatherapi.com/)
+- **Environment Variable**: `WEATHERAPI_KEY`
+
+#### 4. **Visual Crossing** 📊
+- **API Key Required**: Yes
+- **Free Tier**: 1,000 calls/day
+- **Features**: Weather analytics, historical data, forecasts
+- **Sign up**: [visualcrossing.com](https://www.visualcrossing.com/weather-api)
+- **Environment Variable**: `VISUAL_CROSSING_API_KEY`
+
+#### 5. **Open-Meteo** 🆓
+- **API Key Required**: No (Free!)
+- **Free Tier**: Unlimited non-commercial use
+- **Features**: Open-source weather data, European focus
+- **No signup required**: [open-meteo.com](https://open-meteo.com/)
+- **Environment Variable**: None needed
+
+### 🔧 Provider Configuration
+
+Configure providers via **LaunchDarkly feature flags** or environment variables:
+
+```javascript
+// Example LaunchDarkly flag configuration
+{
+  "primary": "openweathermap",
+  "fallback": "open-meteo",
+  "available": ["openweathermap", "tomorrow-io", "weatherapi", "visual-crossing", "open-meteo"]
+}
+```
+
+### 🎯 Quick Setup
+
+**Option 1: Use Free Provider (No setup required)**
+- No configuration needed! The app uses Open-Meteo as fallback
+
+**Option 2: Use Premium Provider**
+1. Choose your provider from the list above
+2. Sign up and get your API key
+3. Add it to your `.env` file:
+   ```bash
+   OPENWEATHER_API_KEY=your_api_key_here
+   TOMORROW_API_KEY=your_api_key_here
+   WEATHERAPI_KEY=your_api_key_here
+   VISUAL_CROSSING_API_KEY=your_api_key_here
+   ```
+
+**Option 3: Use Multiple Providers**
+- Add multiple API keys for automatic fallback
+- Configure provider priority via LaunchDarkly flags
+- App will switch providers if one fails
+
+### 🔒 Security Features
+
+- **Server-side API handling** - All API keys are handled server-side
+- **Never exposed to client** - API keys remain secure in backend
+- **Intelligent fallback** - Automatically switches providers if one fails
+- **Rate limiting protection** - Built-in request throttling
+- **Error handling** - Graceful degradation if all providers fail
+
+### 🚀 Provider Testing
+
+Use the **debug panel** (Cmd+K) to test all providers:
+- **Test individual providers** - Check which ones are working
+- **Test all providers** - Verify fallback chain
+- **Real-time status** - See which providers are available
+- **Response time monitoring** - Performance metrics for each provider
+
+**Note:** The app will work with demo data if no API keys are provided, using Open-Meteo as the default free provider.
 
 ## 🔒 Security
 
@@ -254,7 +335,7 @@ This application has undergone a basic security review to ensure safe deployment
 **Key Security Highlights:**
 - ✅ **No secrets in codebase** - All API keys loaded from environment variables
 - ✅ **Dependency security** - Reputable, up-to-date dependencies
-- ✅ **Safe API usage** - Only trusted APIs (OpenWeatherMap, LaunchDarkly)
+- ✅ **Safe API usage** - Only trusted APIs (5 weather providers + LaunchDarkly)
 - ✅ **Secure data handling** - No PII stored, localStorage used only for non-sensitive data
 - ✅ **Infrastructure security** - Terraform variables marked as sensitive
 - ✅ **No dangerous functions** - No use of `eval`, `innerHTML`, or `dangerouslySetInnerHTML`
@@ -444,17 +525,26 @@ npx serve -s build -l 3002
 
 ### Environment Variables
 
+#### Frontend (React) Variables
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `REACT_APP_LAUNCHDARKLY_CLIENT_ID` | No | LaunchDarkly client SDK key for feature flags |
-| `REACT_APP_OPENWEATHER_API_KEY` | No | OpenWeatherMap API key for live weather data |
 | `REACT_APP_GA_MEASUREMENT_ID` | No | Google Analytics measurement ID for optional usage tracking |
 | `REACT_APP_VERSION` | No | App version for LaunchDarkly context |
 | `REACT_APP_LD_BASE_URL` | No | LaunchDarkly base URL (for proxy setups) |
 | `REACT_APP_LD_STREAM_URL` | No | LaunchDarkly stream URL (for proxy setups) |
 | `REACT_APP_LD_EVENTS_URL` | No | LaunchDarkly events URL (for proxy setups) |
 
-**Note:** All environment variables are optional. The app will work in demo mode without any configuration.
+#### Backend (Server) Variables
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENWEATHER_API_KEY` | No | OpenWeatherMap API key for weather data |
+| `TOMORROW_API_KEY` | No | Tomorrow.io API key for weather data |
+| `WEATHERAPI_KEY` | No | WeatherAPI.com API key for weather data |
+| `VISUAL_CROSSING_API_KEY` | No | Visual Crossing API key for weather data |
+| `LAUNCHDARKLY_SDK_KEY` | No | LaunchDarkly server SDK key for weather provider configuration |
+
+**Note:** All environment variables are optional. The app will work in demo mode without any configuration, using Open-Meteo as the free fallback provider.
 
 #### Google Analytics Setup (Optional)
 
@@ -547,7 +637,12 @@ This project is licensed under the MIT License.
 ## 🙏 Acknowledgments
 
 - **LaunchDarkly** for feature flag management and real-time configuration
-- **OpenWeatherMap** for accurate weather data and API
+- **Weather API Providers** for reliable weather data:
+  - **OpenWeatherMap** - Global weather data and comprehensive API
+  - **Tomorrow.io** - High-precision weather forecasting
+  - **WeatherAPI** - Real-time weather with generous free tier
+  - **Visual Crossing** - Weather analytics and historical data
+  - **Open-Meteo** - Open-source weather data (free!)
 - **Google Fonts** for Orbitron and Courier Prime typography
 - **80s Synthpop Culture** for retro-futuristic design inspiration
 - **CRT Monitor Aesthetics** for authentic terminal visual effects
