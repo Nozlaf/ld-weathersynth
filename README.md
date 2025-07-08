@@ -150,6 +150,48 @@ The PM2 configuration is defined in `ecosystem.config.js`:
 
 **Access the application:** `http://localhost:3001`
 
+## 🚀 Alternative Deployment (Without PM2)
+
+If you prefer not to use PM2, you can run the application directly with Node.js:
+
+### Simple Production Start
+
+```bash
+# Build the application
+npm run build
+
+# Start the server with custom port and production mode
+PORT=3004 NODE_ENV=production node server/server.js
+```
+
+### Other Methods
+
+**Development mode (two terminals):**
+```bash
+# Terminal 1: Start backend
+cd server && npm start
+
+# Terminal 2: Start frontend
+npm start
+```
+
+**Background process:**
+```bash
+# Run in background with nohup
+npm run build
+nohup PORT=3004 NODE_ENV=production node server/server.js > app.log 2>&1 &
+```
+
+**Using Forever (alternative process manager):**
+```bash
+# Install forever globally
+npm install -g forever
+
+# Start with forever
+npm run build
+forever start server/server.js
+```
+
 ## 🔄 Changelog
 
 ### Version 1.1.0 - Latest Release
