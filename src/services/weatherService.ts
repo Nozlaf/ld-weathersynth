@@ -83,16 +83,39 @@ export const getCurrentLocation = (): Promise<Location> => {
 };
 
 export const getWeatherData = async (location: Location, ldClient?: any): Promise<WeatherData> => {
-  // Use backend API proxy instead of calling OpenWeatherMap directly
-  const apiUrl = `${API_BASE_URL}/api/weather?lat=${location.lat}&lon=${location.lon}`;
-  const startTime = Date.now();
+  // Get user context from LaunchDarkly client
+  const userContext = ldClient?.getContext ? ldClient.getContext() : null;
+  
+  // Build API URL with user context parameters
+  const baseUrl = `${API_BASE_URL}/api/weather?lat=${location.lat}&lon=${location.lon}`;
+  const userParams = new URLSearchParams();
+  
+  if (userContext) {
+    if (userContext.key) userParams.append('userKey', userContext.key);
+    if (userContext.name) userParams.append('userName', userContext.name);
+    if (userContext.email) userParams.append('userEmail', userContext.email);
+  }
+  
+  const apiUrl = userParams.toString() ? `${baseUrl}&${userParams.toString()}` : baseUrl;
+  const internalStartTime = Date.now();
 
   try {
     const response = await fetch(apiUrl);
-    const responseTime = Date.now() - startTime;
+    const internalLatency = Date.now() - internalStartTime;
 
     if (!response.ok) {
-      weatherDebug.updateRequestInfo(apiUrl, `HTTP ${response.status}`, responseTime);
+      weatherDebug.updateRequestInfo(apiUrl, `HTTP ${response.status}`, internalLatency);
+      
+      // Track internal latency for error response to LaunchDarkly
+      if (ldClient && ldClient.track) {
+        ldClient.track('internal_latency', {
+          latency_ms: internalLatency,
+          endpoint: '/api/weather',
+          success: false,
+          error: `HTTP ${response.status}`,
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // Handle specific API errors
       if (response.status === 401 || response.status === 500) {
@@ -115,11 +138,24 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
     }
 
     const weatherData = await response.json();
-    weatherDebug.updateRequestInfo(apiUrl, `Success (${response.status})`, responseTime);
+    weatherDebug.updateRequestInfo(apiUrl, `Success (${response.status})`, internalLatency);
+
+    // Track internal latency for successful response to LaunchDarkly
+    if (ldClient && ldClient.track) {
+      ldClient.track('internal_latency', {
+        latency_ms: internalLatency,
+        endpoint: '/api/weather',
+        success: true,
+        cached: weatherData.cached || false,
+        provider: weatherData.provider,
+        upstream_latency: weatherData.upstreamLatency,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Check if we received mock data
     if (weatherData.mockData) {
-      weatherDebug.updateRequestInfo(apiUrl, 'Success (Mock Data)', responseTime);
+      weatherDebug.updateRequestInfo(apiUrl, 'Success (Mock Data)', internalLatency);
     }
 
     // Update location info with actual city name from API
@@ -138,8 +174,19 @@ export const getWeatherData = async (location: Location, ldClient?: any): Promis
     return weatherData;
   } catch (error) {
     console.error('Failed to fetch weather data:', error);
-    const responseTime = Date.now() - startTime;
-    weatherDebug.updateRequestInfo(apiUrl, `Error: ${error}`, responseTime);
+    const internalLatency = Date.now() - internalStartTime;
+    weatherDebug.updateRequestInfo(apiUrl, `Error: ${error}`, internalLatency);
+    
+    // Track internal latency for error response to LaunchDarkly
+    if (ldClient && ldClient.track) {
+      ldClient.track('internal_latency', {
+        latency_ms: internalLatency,
+        endpoint: '/api/weather',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
     
     // Re-throw WeatherAPIError objects to be handled by the component
     if (error && typeof error === 'object' && 'type' in error) {

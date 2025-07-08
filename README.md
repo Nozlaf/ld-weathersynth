@@ -392,6 +392,8 @@ For detailed security analysis, vulnerability assessment, and compliance recomme
 - **Real-time flag updates** - changes apply immediately without page refresh
 - **Theme testing** - debug panel allows quick cycling through all 9 themes
 - **Comprehensive theming** - CSS custom properties system supports easy theme development
+- **Latency tracking** - both upstream and internal API latency metrics tracked to LaunchDarkly
+- **User context tracking** - API calls include user context for better analytics and debugging
 
 ### 🎨 Visual Effects
 - **CRT effects** - authentic retro terminal aesthetics
@@ -490,6 +492,46 @@ The app is fully responsive with breakpoints at:
 - **Tablet**: 768px - 1023px
 - **Mobile**: 320px - 767px
 
+## 📊 Performance Monitoring & Metrics
+
+### Latency Tracking
+The application tracks comprehensive latency metrics for performance monitoring:
+
+#### **Internal Latency** (Client-side tracking)
+- **What it measures**: Time from client API request start to response completion
+- **Tracked to**: LaunchDarkly events for real-time monitoring
+- **Includes**:
+  - Request/response time for `/api/weather` endpoint
+  - Request/response time for `/api/weather/test` endpoint
+  - Success/failure status and error details
+  - Cache hit/miss information
+  - Provider information and upstream latency correlation
+
+#### **Upstream Latency** (Server-side tracking)
+- **What it measures**: Time from server external API call start to response completion
+- **Tracked to**: LaunchDarkly events for external service monitoring
+- **Includes**:
+  - Individual weather provider response times
+  - Provider type (primary, fallback, emergency, mock)
+  - Success/failure status and error details
+  - Location coordinates for geographic analysis
+  - Fallback chain tracking when providers fail
+
+#### **User Context Integration**
+All API calls automatically include user context for enhanced analytics:
+- **User identification**: LaunchDarkly user key, name, and email
+- **Session tracking**: Request IDs, user agent, IP address
+- **Request metadata**: Endpoint, timestamp, success status
+- **Performance correlation**: Links user actions to performance metrics
+
+#### **Metrics Dashboard**
+Monitor performance in LaunchDarkly:
+1. **Events** → Search for `internal_latency` and `upstream_latency` events
+2. **Custom metrics** for API response times
+3. **Error tracking** with detailed error messages and context
+4. **Geographic performance** analysis by location coordinates
+5. **Provider performance** comparison across weather services
+
 ## 🏗️ Architecture
 
 ### File Structure
@@ -568,7 +610,7 @@ npx serve -s build -l 3002
 | `TOMORROW_API_KEY` | No | Tomorrow.io API key for weather data |
 | `WEATHERAPI_KEY` | No | WeatherAPI.com API key for weather data |
 | `VISUAL_CROSSING_API_KEY` | No | Visual Crossing API key for weather data |
-| `LAUNCHDARKLY_SDK_KEY` | No | LaunchDarkly server SDK key for weather provider configuration |
+| `LAUNCHDARKLY_SDK_KEY` | No | LaunchDarkly server SDK key for weather provider configuration and metrics tracking |
 
 **Note:** All environment variables are optional. The app will work in demo mode without any configuration, using Open-Meteo as the free fallback provider.
 

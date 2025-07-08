@@ -32,14 +32,30 @@ const WeatherApiTestingModal: React.FC<WeatherApiTestingModalProps> = ({
     setTestingWeatherProviders(prev => [...prev, provider]);
     
     try {
-      const startTime = Date.now();
+      const internalStartTime = Date.now();
       
       // Use test coordinates (New York City)
       const testLat = 40.7128;
       const testLon = -74.0060;
       
-      const response = await fetch(`/api/weather/test?provider=${provider}&lat=${testLat}&lon=${testLon}`);
-      const responseTime = Date.now() - startTime;
+      // Build URL with user context parameters (if available from LaunchDarkly)
+      const baseUrl = `/api/weather/test?provider=${provider}&lat=${testLat}&lon=${testLon}`;
+      const userParams = new URLSearchParams();
+      
+      // Try to get user context from LaunchDarkly (assuming it's available in window scope)
+      const ldClient = (window as any).ldClient;
+      if (ldClient && ldClient.getContext) {
+        const userContext = ldClient.getContext();
+        if (userContext) {
+          if (userContext.key) userParams.append('userKey', userContext.key);
+          if (userContext.name) userParams.append('userName', userContext.name);
+          if (userContext.email) userParams.append('userEmail', userContext.email);
+        }
+      }
+      
+      const apiUrl = userParams.toString() ? `${baseUrl}&${userParams.toString()}` : baseUrl;
+      const response = await fetch(apiUrl);
+      const internalLatency = Date.now() - internalStartTime;
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -47,11 +63,24 @@ const WeatherApiTestingModal: React.FC<WeatherApiTestingModalProps> = ({
       
       const data = await response.json();
       
+      // Track internal latency for successful test to LaunchDarkly
+      if (ldClient && ldClient.track) {
+        ldClient.track('internal_latency', {
+          latency_ms: internalLatency,
+          endpoint: '/api/weather/test',
+          success: true,
+          provider: provider,
+          upstream_latency: data.upstreamLatency,
+          test_coordinates: `${testLat},${testLon}`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       const result: WeatherProviderTestResult = {
         provider,
         success: true,
         data,
-        responseTime,
+        responseTime: internalLatency,
         timestamp: new Date()
       };
       
@@ -61,6 +90,22 @@ const WeatherApiTestingModal: React.FC<WeatherApiTestingModalProps> = ({
       });
       
     } catch (error) {
+      const internalLatency = Date.now() - Date.now(); // Approximate error latency
+      
+      // Track internal latency for failed test to LaunchDarkly
+      const ldClient = (window as any).ldClient;
+      if (ldClient && ldClient.track) {
+        ldClient.track('internal_latency', {
+          latency_ms: internalLatency,
+          endpoint: '/api/weather/test',
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          provider: provider,
+          test_coordinates: '40.7128,-74.0060',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       const result: WeatherProviderTestResult = {
         provider,
         success: false,
