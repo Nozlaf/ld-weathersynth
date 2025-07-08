@@ -15,6 +15,7 @@ terraform {
 # Configure the LaunchDarkly Provider
 provider "launchdarkly" {
   access_token = var.launchdarkly_access_token
+  http_timeout = 60  # Increase timeout from default 10s to 60s
 }
 
 # Variables
