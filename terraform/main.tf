@@ -673,13 +673,47 @@ resource "launchdarkly_feature_flag_environment" "weather_api_provider_test" {
   off_variation = 0  # OpenWeatherMap + Fallbacks
 }
 
-# Custom Metric for Theme Changes (based on existing metric)
+# Custom Metrics for Performance and User Experience Tracking
+
+# Theme Changes - User Experience Metric
 resource "launchdarkly_metric" "theme_change" {
   project_key = launchdarkly_project.weather_app.key
   key         = "theme-change"
   name        = "theme-change"
   kind        = "custom"
-  description = "Tracks theme change events"
+  description = "Tracks theme change events for user experience analytics"
+  event_key   = "theme-change"
+  tags        = ["ux", "theme", "user-experience"]
+}
+
+# Internal Latency - Client-side API Performance
+resource "launchdarkly_metric" "internal_latency" {
+  project_key          = launchdarkly_project.weather_app.key
+  key                  = "internal-latency"
+  name                 = "internal-latency"
+  kind                 = "custom"
+  description          = "Tracks client-side API request latency from request start to response completion"
+  event_key            = "internal_latency"
+  is_numeric           = true
+  unit                 = "ms"
+  success_criteria     = "LowerThanBaseline"
+  randomization_units  = ["user"]
+  tags                 = ["performance", "latency", "api", "client-side"]
+}
+
+# Upstream Latency - Server-side External API Performance
+resource "launchdarkly_metric" "upstream_latency" {
+  project_key          = launchdarkly_project.weather_app.key
+  key                  = "upstream-latency"
+  name                 = "upstream-latency"
+  kind                 = "custom"
+  description          = "Tracks server-side external API call latency to weather providers"
+  event_key            = "upstream_latency"
+  is_numeric           = true
+  unit                 = "ms"
+  success_criteria     = "LowerThanBaseline"
+  randomization_units  = ["user"]
+  tags                 = ["performance", "latency", "weather-api", "server-side"]
 }
 
 # Outputs
@@ -690,12 +724,14 @@ output "project_key" {
 
 output "client_side_id_production" {
   description = "Client-side ID for Production environment"
-  value       = launchdarkly_project.weather_app.environments.production.client_side_id
+  value       = launchdarkly_project.weather_app.environments[1].client_side_id
+  sensitive   = true
 }
 
 output "client_side_id_test" {
   description = "Client-side ID for Test environment"
-  value       = launchdarkly_project.weather_app.environments.test.client_side_id
+  value       = launchdarkly_project.weather_app.environments[0].client_side_id
+  sensitive   = true
 }
 
 output "feature_flags" {
@@ -711,5 +747,14 @@ output "feature_flags" {
     show_moon_phase = launchdarkly_feature_flag.show_moon_phase.key
     enable_sakura_theme     = launchdarkly_feature_flag.enable_sakura_theme.key
     weather_api_provider    = launchdarkly_feature_flag.weather_api_provider.key
+  }
+}
+
+output "metrics" {
+  description = "Created custom metrics"
+  value = {
+    theme_change      = launchdarkly_metric.theme_change.key
+    internal_latency  = launchdarkly_metric.internal_latency.key
+    upstream_latency  = launchdarkly_metric.upstream_latency.key
   }
 } 
