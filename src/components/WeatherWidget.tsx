@@ -3,6 +3,7 @@ import { WeatherData, getCurrentWeather, WeatherAPIError } from '../services/wea
 import { useTheme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import moonPhaseService from '../services/moonPhaseService';
+import { MoonPhaseResponse } from '../types/moonPhase';
 import locationSimulationService from '../services/locationSimulationService';
 import WeatherDebugService from '../services/weatherDebugService';
 import OptionsModal from './OptionsModal';
@@ -15,7 +16,8 @@ const WeatherWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<WeatherAPIError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
+  const [moonPhaseData, setMoonPhaseData] = useState<MoonPhaseResponse | null>(null);
+  const [showMoonTooltip, setShowMoonTooltip] = useState<boolean>(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f' | 'k'>('c');
   const [distanceUnit, setDistanceUnit] = useState<'m' | 'i'>('m');
@@ -26,11 +28,30 @@ const WeatherWidget: React.FC = () => {
 
   const fetchMoonPhase = async () => {
     try {
-      const moonEmoji = await moonPhaseService.getMoonPhaseEmojiForWeather();
-      setMoonPhaseEmoji(moonEmoji);
+      const moonData = await moonPhaseService.getCurrentMoonPhase();
+      setMoonPhaseData(moonData);
     } catch (error) {
       console.warn('Failed to fetch moon phase:', error);
-      // Keep the default moon emoji if fetching fails
+      // Keep the default moon data if fetching fails
+      setMoonPhaseData({
+        data: {
+          Error: 1,
+          ErrorMsg: 'Failed to fetch',
+          TargetDate: Date.now().toString(),
+          Moon: ['Unknown'],
+          Index: 0,
+          Age: 0,
+          Phase: 'Unknown',
+          Distance: 0,
+          Illumination: 0.5,
+          AngularDiameter: 0,
+          DistanceToSun: 0,
+          SunAngularDiameter: 0
+        },
+        phase: 'Unknown',
+        illumination: 0.5,
+        emoji: '🌙'
+      });
     }
   };
 
@@ -369,11 +390,30 @@ SYSTEM ERROR: ${error}
                   <span className="detail-label">WIND:</span>
                   <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
                 </div>
-                {showMoonPhase && (
+                {showMoonPhase && moonPhaseData && (
                   <div className="detail-row">
                     <span className="detail-label">MOON PHASE:</span>
                     <span className="detail-value moon-phase-detail">
-                      {moonPhaseEmoji}
+                      <span 
+                        className="moon-phase-icon"
+                        title={moonPhaseData.phase}
+                        onMouseEnter={() => setShowMoonTooltip(true)}
+                        onMouseLeave={() => setShowMoonTooltip(false)}
+                        onClick={() => setShowMoonTooltip(!showMoonTooltip)}
+                        style={{ cursor: 'help', position: 'relative' }}
+                      >
+                        {moonPhaseData.emoji}
+                        {showMoonTooltip && (
+                          <div className="moon-tooltip">
+                            <div className="moon-tooltip-content">
+                              <strong>{moonPhaseData.phase}</strong>
+                              <div className="moon-tooltip-details">
+                                <small>Illumination: {Math.round(moonPhaseData.illumination * 100)}%</small>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </span>
                     </span>
                   </div>
                 )}

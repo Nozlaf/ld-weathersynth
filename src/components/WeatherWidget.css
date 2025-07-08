@@ -704,6 +704,160 @@
   filter: brightness(0.3) contrast(2) drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
 }
 
+/* Moon phase tooltip styles */
+.moon-phase-icon {
+  position: relative;
+  display: inline-block;
+}
+
+.moon-tooltip {
+  position: absolute;
+  bottom: auto;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  margin-right: 15px;
+  z-index: 1000;
+  opacity: 1;
+  animation: fadeIn 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.moon-tooltip-content {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.moon-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: var(--border);
+}
+
+.moon-tooltip-details {
+  margin-top: 4px;
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+  to { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+/* Theme-specific tooltip styles */
+.weather-widget.dark-synth .moon-tooltip-content {
+  background: rgba(15, 15, 35, 0.95);
+  border-color: var(--dark-synth-border);
+  color: var(--dark-synth-text-primary);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+}
+
+.weather-widget.dark-synth .moon-tooltip-content::after {
+  border-left-color: var(--dark-synth-border);
+}
+
+.weather-widget.dark-green .moon-tooltip-content {
+  background: rgba(0, 17, 0, 0.95);
+  border-color: var(--dark-green-border);
+  color: var(--dark-green-text-primary);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.weather-widget.dark-green .moon-tooltip-content::after {
+  border-left-color: var(--dark-green-border);
+}
+
+.weather-widget.dark-orange .moon-tooltip-content {
+  background: rgba(26, 14, 0, 0.95);
+  border-color: var(--dark-orange-border);
+  color: var(--dark-orange-text-primary);
+  box-shadow: 0 0 20px rgba(255, 136, 0, 0.3);
+}
+
+.weather-widget.dark-orange .moon-tooltip-content::after {
+  border-left-color: var(--dark-orange-border);
+}
+
+.weather-widget.light .moon-tooltip-content {
+  background: rgba(240, 240, 232, 0.95);
+  border-color: var(--light-border);
+  color: var(--light-text-primary);
+  box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
+}
+
+.weather-widget.light .moon-tooltip-content::after {
+  border-left-color: var(--light-border);
+}
+
+.weather-widget.grayscale .moon-tooltip-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--grayscale-border);
+  color: var(--grayscale-text-primary);
+  box-shadow: 0 0 20px rgba(102, 102, 102, 0.3);
+}
+
+.weather-widget.grayscale .moon-tooltip-content::after {
+  border-left-color: var(--grayscale-border);
+}
+
+.weather-widget.dark-grayscale .moon-tooltip-content {
+  background: rgba(0, 0, 0, 0.95);
+  border-color: var(--dark-grayscale-border);
+  color: var(--dark-grayscale-text-primary);
+  box-shadow: 0 0 20px rgba(136, 136, 136, 0.3);
+}
+
+.weather-widget.dark-grayscale .moon-tooltip-content::after {
+  border-left-color: var(--dark-grayscale-border);
+}
+
+.weather-widget.sakura .moon-tooltip-content {
+  background: rgba(253, 242, 248, 0.95);
+  border-color: var(--sakura-border);
+  color: var(--sakura-text-primary);
+  box-shadow: 0 0 20px rgba(244, 114, 182, 0.3);
+}
+
+.weather-widget.sakura .moon-tooltip-content::after {
+  border-left-color: var(--sakura-border);
+}
+
+.weather-widget.winter .moon-tooltip-content {
+  background: rgba(240, 249, 255, 0.95);
+  border-color: var(--winter-border);
+  color: var(--winter-text-primary);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.weather-widget.winter .moon-tooltip-content::after {
+  border-left-color: var(--winter-border);
+}
+
+.weather-widget.heart-of-gold .moon-tooltip-content {
+  background: rgba(0, 0, 0, 0.98);
+  border-color: var(--heart-of-gold-border);
+  color: var(--heart-of-gold-text-primary);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.weather-widget.heart-of-gold .moon-tooltip-content::after {
+  border-left-color: var(--heart-of-gold-border);
+}
+
 .weather-temp {
   font-family: 'Orbitron', monospace;
   font-size: 3.5rem;
