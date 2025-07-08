@@ -7,8 +7,8 @@ import './OptionsModal.css';
 interface OptionsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  temperatureUnit: 'c' | 'f';
-  onTemperatureUnitChange: (unit: 'c' | 'f') => void;
+  temperatureUnit: 'c' | 'f' | 'k';
+  onTemperatureUnitChange: (unit: 'c' | 'f' | 'k') => void;
   distanceUnit: 'm' | 'i';
   onDistanceUnitChange: (unit: 'm' | 'i') => void;
 }

@@ -17,7 +17,7 @@ const WeatherWidget: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [moonPhaseEmoji, setMoonPhaseEmoji] = useState<string>('🌙');
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f'>('c');
+  const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f' | 'k'>('c');
   const [distanceUnit, setDistanceUnit] = useState<'m' | 'i'>('m');
   
   const { theme } = useTheme();
@@ -168,7 +168,13 @@ const WeatherWidget: React.FC = () => {
       }
       if (changes['default-temperature']) {
         console.log('🔍 DEBUG: default-temperature flag changed:', changes['default-temperature']);
-        setTemperatureUnit(changes['default-temperature'].current);
+        const newTempUnit = changes['default-temperature'].current;
+        // Support 'c', 'f', and 'k' values from LaunchDarkly
+        if (newTempUnit === 'c' || newTempUnit === 'f' || newTempUnit === 'k') {
+          setTemperatureUnit(newTempUnit);
+        } else {
+          setTemperatureUnit('c'); // Fallback to Celsius
+        }
       }
       if (changes['default-distance']) {
         console.log('🔍 DEBUG: default-distance flag changed:', changes['default-distance']);
@@ -191,7 +197,12 @@ const WeatherWidget: React.FC = () => {
   useEffect(() => {
     if (ldClient) {
       const flagValue = ldClient.variation('default-temperature', 'c');
-      setTemperatureUnit(flagValue);
+      // Support 'c', 'f', and 'k' values from LaunchDarkly
+      if (flagValue === 'c' || flagValue === 'f' || flagValue === 'k') {
+        setTemperatureUnit(flagValue);
+      } else {
+        setTemperatureUnit('c'); // Fallback to Celsius
+      }
     }
   }, [ldClient]);
 
@@ -227,9 +238,15 @@ const WeatherWidget: React.FC = () => {
     return Math.round((celsius * 9/5) + 32);
   };
 
+  const convertCelsiusToKelvin = (celsius: number): number => {
+    return Math.round((celsius + 273.15) * 100) / 100; // Keep two decimal places for precision
+  };
+
   const formatTemperature = (temperature: number): string => {
     if (temperatureUnit === 'f') {
       return `${convertCelsiusToFahrenheit(temperature)}°F`;
+    } else if (temperatureUnit === 'k') {
+      return `${convertCelsiusToKelvin(temperature)} K`;
     }
     return `${temperature}°C`;
   };
