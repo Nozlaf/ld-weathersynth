@@ -415,6 +415,54 @@ resource "launchdarkly_feature_flag" "enable_sakura_theme" {
   tags = []
 }
 
+# Weather API Provider Feature Flag
+resource "launchdarkly_feature_flag" "weather_api_provider" {
+  project_key = launchdarkly_project.weather_app.key
+  key         = "weather-api-provider"
+  name        = "weather-api-provider"
+  description = "Configure which weather API provider to use with fallback support"
+  temporary   = false
+
+  variation_type = "json"
+  variations {
+    value       = jsonencode({"primary": "openweathermap", "fallback": "open-meteo"})
+    name        = "OpenWeatherMap + Open-Meteo"
+    description = "Primary: OpenWeatherMap, Fallback: Open-Meteo (free)"
+  }
+  variations {
+    value       = jsonencode({"primary": "tomorrow-io", "fallback": "openweathermap"})
+    name        = "Tomorrow.io + OpenWeatherMap"
+    description = "Primary: Tomorrow.io, Fallback: OpenWeatherMap"
+  }
+  variations {
+    value       = jsonencode({"primary": "weatherapi", "fallback": "open-meteo"})
+    name        = "WeatherAPI + Open-Meteo"
+    description = "Primary: WeatherAPI.com, Fallback: Open-Meteo (free)"
+  }
+  variations {
+    value       = jsonencode({"primary": "visual-crossing", "fallback": "open-meteo"})
+    name        = "Visual Crossing + Open-Meteo"
+    description = "Primary: Visual Crossing, Fallback: Open-Meteo (free)"
+  }
+  variations {
+    value       = jsonencode({"primary": "open-meteo", "fallback": "openweathermap"})
+    name        = "Open-Meteo + OpenWeatherMap"
+    description = "Primary: Open-Meteo (free), Fallback: OpenWeatherMap"
+  }
+
+  defaults {
+    on_variation  = 0  # OpenWeatherMap + Open-Meteo
+    off_variation = 0  # OpenWeatherMap + Open-Meteo
+  }
+
+  client_side_availability {
+    using_environment_id = false
+    using_mobile_key     = false
+  }
+
+  tags = ["weather", "api", "backend"]
+}
+
 # Environment-specific flag configurations to match current state
 # All flags are currently OFF in both environments
 
@@ -509,6 +557,16 @@ resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_production
   off_variation = 1  # false (Disabled)
 }
 
+resource "launchdarkly_feature_flag_environment" "weather_api_provider_production" {
+  flag_id      = launchdarkly_feature_flag.weather_api_provider.id
+  env_key      = "production"
+  on           = false
+  fallthrough {
+    variation = 0  # OpenWeatherMap + Open-Meteo
+  }
+  off_variation = 0  # OpenWeatherMap + Open-Meteo
+}
+
 # Test Environment Flag States
 resource "launchdarkly_feature_flag_environment" "default_theme_test" {
   flag_id      = launchdarkly_feature_flag.default_theme.id
@@ -598,6 +656,16 @@ resource "launchdarkly_feature_flag_environment" "enable_sakura_theme_test" {
     variation = 0  # true (Enabled)
   }
   off_variation = 1  # false (Disabled)
+}
+
+resource "launchdarkly_feature_flag_environment" "weather_api_provider_test" {
+  flag_id      = launchdarkly_feature_flag.weather_api_provider.id
+  env_key      = "test"
+  on           = false
+  fallthrough {
+    variation = 0  # OpenWeatherMap + Open-Meteo
+  }
+  off_variation = 0  # OpenWeatherMap + Open-Meteo
 }
 
 # Custom Metric for Theme Changes (based on existing metric)

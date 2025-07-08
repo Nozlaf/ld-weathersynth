@@ -5,7 +5,12 @@ import { useTheme } from '../hooks/useTheme';
 import WeatherDebugService, { WeatherDebugInfo } from '../services/weatherDebugService';
 import locationSimulationService from '../services/locationSimulationService';
 import { LocationSimulationState } from '../types/locationSimulation';
-import { getCachedWeatherData } from '../services/weatherService';
+import WeatherApiTestingModal from './WeatherApiTestingModal';
+import CacheViewerModal from './CacheViewerModal';
+import LocationSimulationModal from './LocationSimulationModal';
+import ContextDataModal from './ContextDataModal';
+import WeatherDebugModal from './WeatherDebugModal';
+import FeatureFlagsModal from './FeatureFlagsModal';
 import './LaunchDarklyDebugPanel.css';
 
 // Declare LDRecord for LaunchDarkly session recording
@@ -37,9 +42,14 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     activeLocation: null,
     presetLocations: []
   });
-  const [cachedWeatherData, setCachedWeatherData] = useState<any>(null);
-  const [loadingCachedWeather, setLoadingCachedWeather] = useState(false);
-  const [cachedWeatherError, setCachedWeatherError] = useState<string | null>(null);
+
+  // Modal state management
+  const [showWeatherApiModal, setShowWeatherApiModal] = useState(false);
+  const [showCacheViewerModal, setShowCacheViewerModal] = useState(false);
+  const [showLocationSimulationModal, setShowLocationSimulationModal] = useState(false);
+  const [showContextDataModal, setShowContextDataModal] = useState(false);
+  const [showWeatherDebugModal, setShowWeatherDebugModal] = useState(false);
+  const [showFeatureFlagsModal, setShowFeatureFlagsModal] = useState(false);
 
   // Throw error during render if triggered
   if (shouldThrowError) {
@@ -156,19 +166,9 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
     }
   };
 
-  const handleViewCachedWeather = async () => {
-    setLoadingCachedWeather(true);
-    setCachedWeatherError(null);
-    
-    try {
-      const cachedData = await getCachedWeatherData();
-      setCachedWeatherData(cachedData);
-    } catch (error) {
-      setCachedWeatherError(error instanceof Error ? error.message : 'Failed to fetch cached weather data');
-      setCachedWeatherData(null);
-    } finally {
-      setLoadingCachedWeather(false);
-    }
+  // Handler to update location simulation state
+  const handleLocationSimulationUpdate = () => {
+    setLocationSimulation(locationSimulationService.getState());
   };
 
   if (!isVisible) return null;
@@ -234,19 +234,36 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
           <div className="debug-section">
             <h3>🎛️ FEATURE FLAGS</h3>
             <div className="debug-info">
-              {Object.entries(flags).map(([key, value]) => (
-                <div key={key} className="info-row">
-                  <span className="info-label">{key.toUpperCase()}:</span>
-                  <span className="info-value flag-value">
-                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                  </span>
-                </div>
-              ))}
-              {Object.keys(flags).length === 0 && (
-                <div className="info-row">
-                  <span className="info-value no-flags">No flags available (SDK not connected)</span>
-                </div>
-              )}
+              <div className="info-row">
+                <span className="info-label">TOTAL FLAGS:</span>
+                <span className="info-value">{Object.keys(flags).length}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">STATUS:</span>
+                <span className={`info-value ${Object.keys(flags).length > 0 ? 'connected' : 'disconnected'}`}>
+                  {Object.keys(flags).length > 0 ? 'Flags Available' : 'No flags (SDK not connected)'}
+                </span>
+              </div>
+              <div style={{ marginTop: '10px' }}>
+                <button 
+                  className="error-test-button"
+                  onClick={() => setShowFeatureFlagsModal(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '8px 16px',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #ffaa00',
+                    color: '#ffaa00',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>🎛️</span>
+                  <span>VIEW ALL FLAGS</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -281,152 +298,7 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
             </div>
           </div>
 
-          {/* Context Data */}
-          <div className="debug-section">
-            <h3>👤 CONTEXT DATA</h3>
-            <div className="debug-info">
-              {context ? (
-                <>
-                  <div className="info-row">
-                    <span className="info-label">KIND:</span>
-                    <span className="info-value">{context.kind}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">KEY:</span>
-                    <span className="info-value">{context.key}</span>
-                  </div>
-                  
-                  {/* Standard User Attributes */}
-                  {context.name && (
-                    <div className="info-row">
-                      <span className="info-label">NAME:</span>
-                      <span className="info-value">{context.name}</span>
-                    </div>
-                  )}
-                  {context.email && (
-                    <div className="info-row">
-                      <span className="info-label">EMAIL:</span>
-                      <span className="info-value">{context.email}</span>
-                    </div>
-                  )}
-                  {context.avatar && (
-                    <div className="info-row">
-                      <span className="info-label">AVATAR:</span>
-                      <span className="info-value">{context.avatar}</span>
-                    </div>
-                  )}
-                  {context.firstName && (
-                    <div className="info-row">
-                      <span className="info-label">FIRST NAME:</span>
-                      <span className="info-value">{context.firstName}</span>
-                    </div>
-                  )}
-                  {context.lastName && (
-                    <div className="info-row">
-                      <span className="info-label">LAST NAME:</span>
-                      <span className="info-value">{context.lastName}</span>
-                    </div>
-                  )}
-                  {context.ip && (
-                    <div className="info-row">
-                      <span className="info-label">IP ADDRESS:</span>
-                      <span className="info-value">{context.ip}</span>
-                    </div>
-                  )}
-                  {context.country && (
-                    <div className="info-row">
-                      <span className="info-label">COUNTRY:</span>
-                      <span className="info-value">{context.country}</span>
-                    </div>
-                  )}
-                  
-                  {/* Custom Attributes */}
-                  {context.custom && Object.keys(context.custom).length > 0 && (
-                    <>
-                      <div className="info-row" style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid rgba(0, 255, 255, 0.3)' }}>
-                        <span className="info-label" style={{ color: '#ffff00', fontWeight: 'bold' }}>CUSTOM ATTRIBUTES:</span>
-                        <span className="info-value"></span>
-                      </div>
-                      
-                      {/* System Attributes */}
-                      {context.custom.buildVersion && (
-                        <div className="info-row">
-                          <span className="info-label">BUILD VERSION:</span>
-                          <span className="info-value">{context.custom.buildVersion}</span>
-                        </div>
-                      )}
-                      {context.custom.sessionId && (
-                        <div className="info-row">
-                          <span className="info-label">SESSION ID:</span>
-                          <span className="info-value">{context.custom.sessionId}</span>
-                        </div>
-                      )}
-                      {context.custom.environment && (
-                        <div className="info-row">
-                          <span className="info-label">ENVIRONMENT:</span>
-                          <span className="info-value">{context.custom.environment}</span>
-                        </div>
-                      )}
-                      
-                      {/* Location Attributes */}
-                      {context.custom.city && (
-                        <div className="info-row">
-                          <span className="info-label">CITY:</span>
-                          <span className="info-value">🏙️ {context.custom.city}</span>
-                        </div>
-                      )}
-                      {context.custom.country && (
-                        <div className="info-row">
-                          <span className="info-label">COUNTRY CODE:</span>
-                          <span className="info-value">🌍 {context.custom.country}</span>
-                        </div>
-                      )}
-                      {context.custom.location && (
-                        <div className="info-row">
-                          <span className="info-label">FULL LOCATION:</span>
-                          <span className="info-value">📍 {context.custom.location}</span>
-                        </div>
-                      )}
-                      
-                                             {/* Weather Attributes */}
-                       <div className="info-row">
-                         <span className="info-label">NIGHT TIME:</span>
-                         <span className="info-value">{context.custom.night_time ? '🌙 Yes' : '☀️ No'}</span>
-                       </div>
-                      
-                      {/* Dynamic Custom Attributes - Show any other custom attributes that aren't already displayed */}
-                      {Object.entries(context.custom).map(([key, value]) => {
-                        // Skip attributes we've already displayed
-                        const skipKeys = ['buildVersion', 'sessionId', 'environment', 'city', 'country', 'location', 'night_time'];
-                        if (skipKeys.includes(key)) return null;
-                        
-                        // Format the value for display
-                        let displayValue = value;
-                        if (typeof value === 'boolean') {
-                          displayValue = value ? '✅ True' : '❌ False';
-                        } else if (typeof value === 'object' && value !== null) {
-                          displayValue = JSON.stringify(value, null, 2);
-                        } else if (value === null || value === undefined) {
-                          displayValue = 'N/A';
-                        }
-                        
-                        return (
-                          <div key={key} className="info-row">
-                            <span className="info-label">{key.toUpperCase().replace(/_/g, ' ')}:</span>
-                            <span className="info-value">{String(displayValue)}</span>
-                          </div>
-                        );
-                      })}
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="info-row">
-                  <span className="info-value no-context">No context available</span>
-                </div>
-              )}
-            </div>
-          </div>
+          
 
           {/* Weather API Debug */}
           <div className="debug-section">
@@ -445,53 +317,38 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
                     <span className="info-value">{weatherDebugInfo.settings.provider}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">LOCATION METHOD:</span>
-                    <span className="info-value">
-                      {weatherDebugInfo.location.method}
-                      {weatherDebugInfo.location.fallbackUsed && ' (Fallback)'}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">COORDINATES:</span>
-                    <span className="info-value">
-                      {weatherDebugInfo.location.coordinates 
-                        ? `${weatherDebugInfo.location.coordinates.lat.toFixed(4)}, ${weatherDebugInfo.location.coordinates.lon.toFixed(4)}`
-                        : 'Unknown'}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">RESOLVED LOCATION:</span>
+                    <span className="info-label">LOCATION:</span>
                     <span className="info-value">
                       {weatherDebugInfo.location.address || 'Unknown'}
                     </span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">LAST REQUEST:</span>
+                    <span className="info-label">PROVIDERS:</span>
                     <span className="info-value">
-                      {weatherDebugInfo.lastRequest.timestamp 
-                        ? `${weatherDebugInfo.lastRequest.status} (${Math.floor((Date.now() - weatherDebugInfo.lastRequest.timestamp.getTime()) / 60000)}m ago)`
-                        : 'No requests yet'}
+                      {weatherDebugInfo.weatherProviders ? 
+                        `${weatherDebugInfo.weatherProviders.available.length} of ${weatherDebugInfo.weatherProviders.all.length} available` 
+                        : 'Loading...'}
                     </span>
                   </div>
-                  <div className="info-row">
-                    <span className="info-label">RESPONSE TIME:</span>
-                    <span className="info-value">
-                      {weatherDebugInfo.lastRequest.responseTime !== undefined 
-                        ? `${weatherDebugInfo.lastRequest.responseTime}ms`
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">UPDATE INTERVAL:</span>
-                    <span className="info-value">
-                      {weatherDebugInfo.settings.updateInterval} minutes
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">API URL:</span>
-                    <span className="info-value" style={{ fontSize: '0.8rem', wordBreak: 'break-all' }}>
-                      {weatherDebugInfo.lastRequest.url || 'No requests made'}
-                    </span>
+                  <div style={{ marginTop: '10px' }}>
+                    <button 
+                      className="error-test-button"
+                      onClick={() => setShowWeatherDebugModal(true)}
+                      style={{
+                        fontSize: '0.8rem',
+                        padding: '8px 16px',
+                        backgroundColor: 'transparent',
+                        border: '2px solid #00ffff',
+                        color: '#00ffff',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span>🌤️</span>
+                      <span>VIEW DETAILED DEBUG</span>
+                    </button>
                   </div>
                 </>
               ) : (
@@ -499,157 +356,96 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
                   <span className="info-value no-context">Weather debug info not available</span>
                 </div>
               )}
-              
-              {/* Cached Weather Data Section */}
-              <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(0, 255, 255, 0.3)' }}>
-                <div className="info-row">
-                  <span className="info-label" style={{ color: '#ffff00', fontWeight: 'bold' }}>SERVER CACHE:</span>
-                  <button 
-                    className="error-test-button"
-                    onClick={handleViewCachedWeather}
-                    disabled={loadingCachedWeather}
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '6px 12px',
-                      minWidth: '120px',
-                      backgroundColor: 'transparent',
-                      border: '2px solid #00ffff',
-                      color: '#00ffff'
-                    }}
-                  >
-                    {loadingCachedWeather ? '[ LOADING... ]' : '[ VIEW CACHE ]'}
-                  </button>
-                </div>
+            </div>
+          </div>
+
+          {/* Quick Actions Section */}
+          <div className="debug-section">
+            <h3>⚡ QUICK ACTIONS</h3>
+            <div className="debug-info">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                <button 
+                  className="error-test-button"
+                  onClick={() => setShowContextDataModal(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #ffaa00',
+                    color: '#ffaa00',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>👤</span>
+                  <span>VIEW CONTEXT</span>
+                </button>
                 
-                {cachedWeatherError && (
-                  <div className="info-row">
-                    <span className="info-label">ERROR:</span>
-                    <span className="info-value" style={{ color: '#ff4444' }}>
-                      {cachedWeatherError}
-                    </span>
-                  </div>
-                )}
+                <button 
+                  className="error-test-button"
+                  onClick={() => setShowCacheViewerModal(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #00ffff',
+                    color: '#00ffff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>💾</span>
+                  <span>VIEW CACHE</span>
+                </button>
                 
-                {cachedWeatherData && (
-                  <div style={{ marginTop: '10px' }}>
-                    <div className="info-row">
-                      <span className="info-label">CACHE STATUS:</span>
-                      <span className="info-value" style={{ color: '#00ff00' }}>
-                        ✅ Data Retrieved
-                      </span>
-                    </div>
-                    
-                    {/* Display cached data in a readable format */}
-                    <div style={{ 
-                      background: 'rgba(0, 255, 255, 0.05)', 
-                      border: '1px solid rgba(0, 255, 255, 0.2)', 
-                      borderRadius: '8px', 
-                      padding: '10px', 
-                      marginTop: '10px',
-                      maxHeight: '200px',
-                      overflowY: 'auto'
-                    }}>
-                      <pre style={{ 
-                        margin: 0, 
-                        fontSize: '0.75rem', 
-                        color: '#00ffff', 
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                      }}>
-                        {JSON.stringify(cachedWeatherData, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                )}
+                <button 
+                  className="error-test-button"
+                  onClick={() => setShowWeatherApiModal(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #00ff00',
+                    color: '#00ff00',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🧪</span>
+                  <span>TEST WEATHER APIs</span>
+                </button>
+                
+                <button 
+                  className="error-test-button"
+                  onClick={() => setShowLocationSimulationModal(true)}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: '2px solid #ff00ff',
+                    color: '#ff00ff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🌍</span>
+                  <span>SIMULATE LOCATION</span>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Location Simulation */}
-          <div className="debug-section">
-            <h3>🌍 LOCATION SIMULATION</h3>
-            <div className="debug-info">
-              <div className="info-row">
-                <span className="info-label">STATUS:</span>
-                <span className={`info-value ${locationSimulation.isSimulating ? 'connected' : 'disconnected'}`}>
-                  {locationSimulation.isSimulating ? '🟢 Active' : '⚪ Inactive'}
-                </span>
-              </div>
-              {locationSimulation.activeLocation && (
-                <div className="info-row">
-                  <span className="info-label">SIMULATING:</span>
-                  <span className="info-value">
-                    {locationSimulation.activeLocation.emoji} {locationSimulation.activeLocation.displayName}
-                  </span>
-                </div>
-              )}
-              <div style={{ marginTop: '15px' }}>
-                <p style={{ fontSize: '0.85rem', color: '#00ffff', marginBottom: '10px' }}>
-                  Select a location to simulate:
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
-                  {locationSimulation.presetLocations.map((location) => (
-                    <button
-                      key={location.id}
-                      type="button"
-                      className={`error-test-button ${
-                        locationSimulation.activeLocation?.id === location.id ? 'active' : ''
-                      }`}
-                      onClick={() => {
-                        try {
-                          console.log(`🔍 DEBUG: Location simulation button clicked for ${location.id}`);
-                          locationSimulationService.toggleSimulation(location.id);
-                          console.log(`🔍 DEBUG: toggleSimulation completed successfully`);
-                          // Weather widget will automatically refresh via subscription
-                        } catch (error) {
-                          console.error(`🔍 DEBUG: Error in location simulation button click:`, error);
-                          alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
-                        }
-                      }}
-                      style={{
-                        fontSize: '0.75rem',
-                        padding: '8px 12px',
-                        backgroundColor: locationSimulation.activeLocation?.id === location.id 
-                          ? '#ff00ff' : 'transparent',
-                        color: locationSimulation.activeLocation?.id === location.id 
-                          ? '#000' : '#ff00ff'
-                      }}
-                    >
-                      {location.emoji} {location.name}
-                    </button>
-                  ))}
-                </div>
-                {locationSimulation.isSimulating && (
-                  <button
-                    type="button"
-                    className="error-test-button"
-                    onClick={() => {
-                      try {
-                        console.log('🔍 DEBUG: Stop simulation button clicked');
-                        locationSimulationService.stopSimulation();
-                        console.log('🔍 DEBUG: stopSimulation completed successfully');
-                        // Weather widget will automatically refresh via subscription
-                                             } catch (error) {
-                         console.error('🔍 DEBUG: Error in stop simulation button click:', error);
-                         alert(`Error: ${error instanceof Error ? error.message : String(error)}`);
-                       }
-                    }}
-                    style={{
-                      marginTop: '10px',
-                      backgroundColor: '#ff0000',
-                      color: '#fff',
-                      borderColor: '#ff0000'
-                    }}
-                  >
-                    [ STOP SIMULATION ]
-                  </button>
-                )}
-                <p style={{ fontSize: '0.8rem', marginTop: '10px', color: '#ffaa00' }}>
-                  💡 Location changes will update weather data automatically
-                </p>
-              </div>
-            </div>
-          </div>
+
+
+
 
           {/* Error Testing */}
           <div className="debug-section">
@@ -691,6 +487,43 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
           </div>
         </div>
       </div>
+      
+      {/* Modals */}
+      <ContextDataModal
+        isVisible={showContextDataModal}
+        onClose={() => setShowContextDataModal(false)}
+        context={context}
+      />
+      
+      <WeatherApiTestingModal
+        isVisible={showWeatherApiModal}
+        onClose={() => setShowWeatherApiModal(false)}
+        weatherDebugInfo={weatherDebugInfo}
+      />
+      
+      <CacheViewerModal
+        isVisible={showCacheViewerModal}
+        onClose={() => setShowCacheViewerModal(false)}
+      />
+      
+      <LocationSimulationModal
+        isVisible={showLocationSimulationModal}
+        onClose={() => setShowLocationSimulationModal(false)}
+        locationSimulation={locationSimulation}
+        onLocationSimulationUpdate={handleLocationSimulationUpdate}
+      />
+      
+      <WeatherDebugModal
+        isVisible={showWeatherDebugModal}
+        onClose={() => setShowWeatherDebugModal(false)}
+        weatherDebugInfo={weatherDebugInfo}
+      />
+      
+      <FeatureFlagsModal
+        isVisible={showFeatureFlagsModal}
+        onClose={() => setShowFeatureFlagsModal(false)}
+        flags={flags}
+      />
     </div>
   );
 };

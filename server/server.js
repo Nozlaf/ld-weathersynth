@@ -3,10 +3,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fetch = require('node-fetch');
+const WeatherProviders = require('./weatherProviders');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Initialize weather providers
+const weatherProviders = new WeatherProviders();
 
 // Security middleware
 app.use(helmet({
@@ -73,6 +77,106 @@ const cleanupExpiredCache = () => {
 // Run cache cleanup every 30 minutes
 setInterval(cleanupExpiredCache, 30 * 60 * 1000);
 
+/**
+ * Get weather provider configuration from LaunchDarkly feature flag
+ * Default format: {"primary": "openweathermap", "fallback": "open-meteo"}
+ */
+const getWeatherProviderConfig = (ldFlag = null) => {
+  // Default configuration
+  const defaultConfig = {
+    primary: 'openweathermap',
+    fallback: 'open-meteo'
+  };
+
+  // If no LaunchDarkly flag provided, return default
+  if (!ldFlag) {
+    return defaultConfig;
+  }
+
+  // Try to parse LaunchDarkly flag if it's a string
+  try {
+    const config = typeof ldFlag === 'string' ? JSON.parse(ldFlag) : ldFlag;
+    
+    // Validate configuration structure
+    if (config && typeof config === 'object' && config.primary) {
+      return {
+        primary: config.primary,
+        fallback: config.fallback || 'open-meteo'
+      };
+    }
+  } catch (error) {
+    console.warn('Invalid weather provider configuration from LaunchDarkly, using default:', error);
+  }
+
+  return defaultConfig;
+};
+
+/**
+ * Get weather data using the configured provider with fallback support
+ */
+const getWeatherWithFallback = async (lat, lon, ldFlag = null) => {
+  const config = getWeatherProviderConfig(ldFlag);
+  const availableProviders = weatherProviders.getAvailableProviders();
+  
+  console.log(`Weather provider config: ${JSON.stringify(config)}`);
+  console.log(`Available providers: ${availableProviders.join(', ')}`);
+
+  // Try primary provider first
+  if (availableProviders.includes(config.primary)) {
+    try {
+      console.log(`Attempting to use primary provider: ${config.primary}`);
+      const data = await weatherProviders.getWeather(config.primary, lat, lon);
+      console.log(`Successfully fetched weather from primary provider: ${config.primary}`);
+      return data;
+    } catch (error) {
+      console.error(`Primary provider ${config.primary} failed:`, error.message);
+    }
+  } else {
+    console.log(`Primary provider ${config.primary} not available`);
+  }
+
+  // Try fallback provider
+  if (config.fallback && availableProviders.includes(config.fallback)) {
+    try {
+      console.log(`Attempting to use fallback provider: ${config.fallback}`);
+      const data = await weatherProviders.getWeather(config.fallback, lat, lon);
+      console.log(`Successfully fetched weather from fallback provider: ${config.fallback}`);
+      return data;
+    } catch (error) {
+      console.error(`Fallback provider ${config.fallback} failed:`, error.message);
+    }
+  } else if (config.fallback) {
+    console.log(`Fallback provider ${config.fallback} not available`);
+  }
+
+  // If both primary and fallback fail, try any available provider
+  for (const provider of availableProviders) {
+    if (provider !== config.primary && provider !== config.fallback) {
+      try {
+        console.log(`Attempting to use emergency provider: ${provider}`);
+        const data = await weatherProviders.getWeather(provider, lat, lon);
+        console.log(`Successfully fetched weather from emergency provider: ${provider}`);
+        return data;
+      } catch (error) {
+        console.error(`Emergency provider ${provider} failed:`, error.message);
+      }
+    }
+  }
+
+  // If all providers fail, return mock data
+  console.log('All weather providers failed, returning mock data');
+  return {
+    temperature: 22,
+    description: 'Sunny (Mock Data)',
+    location: 'Demo City, XX',
+    humidity: 65,
+    windSpeed: 12,
+    icon: '01d',
+    provider: 'mock',
+    mockData: true
+  };
+};
+
 const rateLimit = (req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress;
   const now = Date.now();
@@ -137,74 +241,24 @@ app.get('/api/weather', rateLimit, async (req, res) => {
       });
     }
     
-    // Get API key from server environment (not exposed to client)
-    const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+    console.log(`Cache miss for ${cacheKey}, fetching weather data using configured providers`);
     
-    if (!OPENWEATHER_API_KEY) {
-      // Return mock data if no API key is configured
-      console.log('No API key configured, returning mock data');
-      const mockData = {
-        temperature: 22,
-        description: 'Sunny',
-        location: 'Demo City, XX',
-        humidity: 65,
-        windSpeed: 12,
-        icon: '01d',
-        mockData: true
-      };
-      
-      // Cache mock data too
-      weatherCache.set(cacheKey, {
-        data: mockData,
-        timestamp: Date.now()
-      });
-      
-      return res.json(mockData);
-    }
+    // Get weather provider configuration from LaunchDarkly flag (if provided)
+    // In a real implementation, you would fetch this from LaunchDarkly here
+    // For now, we'll use a default configuration or environment variable
+    const weatherProviderFlag = process.env.WEATHER_PROVIDER_CONFIG ? 
+      JSON.parse(process.env.WEATHER_PROVIDER_CONFIG) : null;
     
-    console.log(`Cache miss for ${cacheKey}, fetching from OpenWeatherMap API`);
+    // Get weather data using the configured providers with fallback
+    const weatherData = await getWeatherWithFallback(latitude, longitude, weatherProviderFlag);
     
-    // Make request to OpenWeatherMap API
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`;
-    
-    const response = await fetch(apiUrl);
-    
-    if (!response.ok) {
-      console.error(`OpenWeatherMap API error: ${response.status}`);
-      
-      if (response.status === 401) {
-        return res.status(500).json({
-          error: 'API configuration error',
-          message: 'Weather service is temporarily unavailable'
-        });
-      }
-      
-      return res.status(502).json({
-        error: 'External service error',
-        message: 'Weather service is temporarily unavailable'
-      });
-    }
-    
-    const data = await response.json();
-    
-    // Transform data to match frontend expectations
-    const weatherData = {
-      temperature: Math.round(data.main.temp),
-      description: data.weather[0].description,
-      location: `${data.name}, ${data.sys.country}`,
-      humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
-      icon: data.weather[0].icon,
-      mockData: false
-    };
-    
-    // Cache the successful response
+    // Cache the response
     weatherCache.set(cacheKey, {
       data: weatherData,
       timestamp: Date.now()
     });
     
-    console.log(`Cached weather data for ${cacheKey}`);
+    console.log(`Cached weather data for ${cacheKey} from provider: ${weatherData.provider}`);
     
     res.json(weatherData);
     
@@ -213,6 +267,80 @@ app.get('/api/weather', rateLimit, async (req, res) => {
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch weather data'
+    });
+  }
+});
+
+// Weather testing endpoint (for debugging individual providers)
+app.get('/api/weather/test', rateLimit, async (req, res) => {
+  try {
+    const { provider, lat, lon } = req.query;
+    
+    // Validate parameters
+    if (!provider) {
+      return res.status(400).json({
+        error: 'Missing provider parameter',
+        message: 'Please specify a weather provider to test'
+      });
+    }
+    
+    if (!lat || !lon) {
+      return res.status(400).json({
+        error: 'Missing coordinates',
+        message: 'Please provide lat and lon parameters'
+      });
+    }
+    
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({
+        error: 'Invalid coordinates',
+        message: 'Latitude and longitude must be valid numbers'
+      });
+    }
+    
+    // Check if provider exists
+    const allProviders = Object.keys(weatherProviders.providers);
+    if (!allProviders.includes(provider)) {
+      return res.status(400).json({
+        error: 'Invalid provider',
+        message: `Provider '${provider}' not found. Available providers: ${allProviders.join(', ')}`
+      });
+    }
+    
+    // Test the specific provider
+    console.log(`Testing weather provider: ${provider} for coordinates ${latitude}, ${longitude}`);
+    
+    try {
+      const weatherData = await weatherProviders.getWeather(provider, latitude, longitude);
+      console.log(`Successfully tested provider: ${provider}`);
+      
+      res.json({
+        ...weatherData,
+        testProvider: provider,
+        testCoordinates: { lat: latitude, lon: longitude },
+        testTimestamp: new Date().toISOString()
+      });
+      
+    } catch (providerError) {
+      console.error(`Provider ${provider} test failed:`, providerError.message);
+      
+      return res.status(500).json({
+        error: 'Provider test failed',
+        message: providerError.message,
+        provider: provider,
+        testCoordinates: { lat: latitude, lon: longitude },
+        testTimestamp: new Date().toISOString()
+      });
+    }
+    
+  } catch (error) {
+    console.error('Weather test API error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to test weather provider'
     });
   }
 });
@@ -228,9 +356,27 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API status endpoint (for debugging - doesn't expose the key)
+// API status endpoint (for debugging - doesn't expose the keys)
 app.get('/api/status', (req, res) => {
-  const hasApiKey = !!process.env.OPENWEATHER_API_KEY;
+  // Get available weather providers
+  const availableProviders = weatherProviders.getAvailableProviders();
+  const allProviders = Object.keys(weatherProviders.providers);
+  
+  // Get provider status
+  const providerStatus = {};
+  allProviders.forEach(provider => {
+    const isAvailable = weatherProviders.isProviderAvailable(provider);
+    providerStatus[provider] = {
+      available: isAvailable,
+      requiresApiKey: weatherProviders.providers[provider].requiresApiKey,
+      status: isAvailable ? 'Ready' : (weatherProviders.providers[provider].requiresApiKey ? 'Missing API Key' : 'Error')
+    };
+  });
+  
+  // Get current weather provider configuration
+  const weatherProviderFlag = process.env.WEATHER_PROVIDER_CONFIG ? 
+    JSON.parse(process.env.WEATHER_PROVIDER_CONFIG) : null;
+  const currentConfig = getWeatherProviderConfig(weatherProviderFlag);
   
   // Get cache statistics
   const cacheStats = {
@@ -254,14 +400,18 @@ app.get('/api/status', (req, res) => {
       location: key,
       ageInSeconds,
       isValid,
-      city: entry.data.location
+      city: entry.data.location,
+      provider: entry.data.provider || 'unknown'
     });
   });
   
   res.json({
-    apiKey: {
-      hasKey: hasApiKey,
-      status: hasApiKey ? 'Configured' : 'Missing (Using Mock Data)'
+    weatherProviders: {
+      available: availableProviders,
+      all: allProviders,
+      status: providerStatus,
+      currentConfig: currentConfig,
+      configSource: process.env.WEATHER_PROVIDER_CONFIG ? 'Environment Variable' : 'Default'
     },
     rateLimit: {
       window: RATE_LIMIT_WINDOW,

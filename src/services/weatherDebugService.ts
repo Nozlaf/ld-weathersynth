@@ -21,6 +21,20 @@ export interface WeatherDebugInfo {
     units: string;
     provider: string;
   };
+  weatherProviders?: {
+    available: string[];
+    all: string[];
+    status: Record<string, {
+      available: boolean;
+      requiresApiKey: boolean;
+      status: string;
+    }>;
+    currentConfig: {
+      primary: string;
+      fallback: string;
+    };
+    configSource: string;
+  };
 }
 
 class WeatherDebugService {
@@ -115,10 +129,25 @@ class WeatherDebugService {
       
       if (response.ok) {
         const status = await response.json();
+        
+        // Update legacy API key status (for backward compatibility)
+        const hasAnyApiKey = status.weatherProviders?.available?.length > 0;
         this.debugInfo.apiKey = {
-          hasKey: status.apiKey.hasKey,
-          status: status.apiKey.status
+          hasKey: hasAnyApiKey,
+          status: hasAnyApiKey ? 'Provider Available' : 'Using Free Providers Only'
         };
+        
+        // Update weather providers information
+        if (status.weatherProviders) {
+          this.debugInfo.weatherProviders = status.weatherProviders;
+          this.debugInfo.settings.provider = `${status.weatherProviders.currentConfig.primary} → ${status.weatherProviders.currentConfig.fallback}`;
+        } else {
+          // Fallback for older server versions
+          this.debugInfo.apiKey = {
+            hasKey: status.apiKey?.hasKey || false,
+            status: status.apiKey?.status || 'Unknown'
+          };
+        }
       } else {
         this.debugInfo.apiKey = {
           hasKey: false,
