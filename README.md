@@ -182,6 +182,7 @@ This application uses LaunchDarkly for feature flag management. The following fl
 | `default-temperature` | String | `"c"` | Default temperature unit: `"c"` for Celsius, `"f"` for Fahrenheit |
 | `default-distance` | String | `"m"` | Default distance unit: `"m"` for metric (km/h), `"i"` for imperial (mph) |
 | `weather-refresh-interval` | Number | `5` | Weather data refresh interval in **minutes** |
+| `weather-api-provider` | JSON | `{"primary": "visual-crossing", "fallback": "open-meteo"}` | **Server-side**: Controls weather API provider selection and fallback chain - see [Weather Provider Configuration](#weather-provider-configuration) |
 | `enable-animations` | Boolean | `true` | Enables CRT effects, floating icons, and animations |
 | `show-extra-weather-info` | Boolean | `true` | Shows humidity and wind speed details |
 | `debug-mode` | Boolean | `false` | Enables debug console logging throughout the app |
@@ -213,6 +214,80 @@ The `default-theme` flag accepts the following values:
 - **Icon theming** - Weather icons adapt using CSS filters per theme
 
 **Note:** The app also supports manual theme selection via the Options panel, which overrides the LaunchDarkly flag.
+
+### Weather Provider Configuration
+
+The `weather-api-provider` flag is a **server-side JSON flag** that controls which weather API provider is used for data fetching. This flag enables intelligent provider switching and fallback handling.
+
+#### Configuration Format
+
+```json
+{
+  "primary": "provider-name",
+  "fallback": "provider-name"
+}
+```
+
+#### Supported Provider Values
+
+| Provider Value | Service | API Key Required | Free Tier |
+|----------------|---------|------------------|-----------|
+| `"openweathermap"` | OpenWeatherMap | Yes | 1,000 calls/day |
+| `"tomorrow-io"` | Tomorrow.io | Yes | 1,000 calls/day |
+| `"weatherapi"` | WeatherAPI | Yes | 1M calls/month |
+| `"visual-crossing"` | Visual Crossing | Yes | 1,000 calls/day |
+| `"open-meteo"` | Open-Meteo | No | Unlimited |
+
+#### Example Configurations
+
+**Production Setup (High Reliability)**
+```json
+{
+  "primary": "openweathermap",
+  "fallback": "open-meteo"
+}
+```
+
+**Development Setup (Free)**
+```json
+{
+  "primary": "open-meteo",
+  "fallback": "open-meteo"
+}
+```
+
+**Premium Setup (Multiple Fallbacks)**
+```json
+{
+  "primary": "visual-crossing",
+  "fallback": "weatherapi"
+}
+```
+
+#### Environment Variable Override
+
+You can override the LaunchDarkly flag using the `WEATHER_PROVIDER_CONFIG` environment variable:
+
+```bash
+# In your .env file
+WEATHER_PROVIDER_CONFIG={"primary": "visual-crossing", "fallback": "open-meteo"}
+```
+
+#### Provider Features
+
+- **Automatic Fallback**: If the primary provider fails, automatically switches to fallback
+- **Real-time Switching**: No app restart required when changing providers via LaunchDarkly
+- **Error Handling**: Graceful degradation with detailed error logging
+- **Performance Monitoring**: Tracks response times and success rates for each provider
+- **Location Enhancement**: Visual Crossing provider includes reverse geocoding for better location names
+
+#### Testing Provider Configuration
+
+Use the debug panel (**Cmd+K**) to:
+- View current provider configuration
+- Test individual provider availability
+- Monitor real-time provider switching
+- Check API response times and error rates
 
 ### Setting up LaunchDarkly
 
@@ -286,16 +361,29 @@ The app supports **5 different weather providers** with intelligent fallback and
 
 ### 🔧 Provider Configuration
 
-Configure providers via **LaunchDarkly feature flags** or environment variables:
+Configure providers via the **`weather-api-provider` LaunchDarkly feature flag** or environment variables:
 
-```javascript
-// Example LaunchDarkly flag configuration
+#### LaunchDarkly Feature Flag Configuration
+
+Use the `weather-api-provider` flag (JSON type) in your LaunchDarkly dashboard:
+
+```json
 {
-  "primary": "openweathermap",
-  "fallback": "open-meteo",
-  "available": ["openweathermap", "tomorrow-io", "weatherapi", "visual-crossing", "open-meteo"]
+  "primary": "visual-crossing",
+  "fallback": "open-meteo"
 }
 ```
+
+#### Environment Variable Configuration
+
+Override the LaunchDarkly flag using the `WEATHER_PROVIDER_CONFIG` environment variable:
+
+```bash
+# In your .env file
+WEATHER_PROVIDER_CONFIG={"primary": "visual-crossing", "fallback": "open-meteo"}
+```
+
+See the [Weather Provider Configuration](#weather-provider-configuration) section under LaunchDarkly Feature Flags for complete details.
 
 ### 🎯 Quick Setup
 
