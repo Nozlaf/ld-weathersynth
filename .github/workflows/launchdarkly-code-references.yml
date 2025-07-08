@@ -17,43 +17,7 @@ jobs:
           fetch-depth: 11 # This value must be set if the lookback configuration option is not disabled for find-code-references. You may want to increase this value if your last commit was further back than 10 commits.
 
       - name: Find code references
-        uses: launchdarkly/find-code-references@v14
+        uses: launchdarkly/find-code-references@v2
         with:
           accessToken: ${{ secrets.LD_ACCESS_TOKEN }}
-          projKey: ${{ secrets.LD_PROJECT_KEY }}
-          # Optional: Environment key for the environment the code references will be searched in
-          # envKey: ${{ secrets.LD_ENV_KEY }}
-          
-          # Configure file patterns to include both frontend and backend code
-          include: |
-            src/**/*.{ts,tsx,js,jsx}
-            server/**/*.{js,ts}
-            *.{js,ts}
-          
-          # Exclude common directories that shouldn't be scanned
-          exclude: |
-            node_modules/**
-            build/**
-            dist/**
-            coverage/**
-            logs/**
-            *.log
-            *.min.js
-            *.map
-            
-          # Optional: Configure flag key patterns if you use a specific naming convention
-          # flagKeyPatterns: |
-          #   your-flag-.*
-          #   feature-.*
-          
-          # Optional: Configure lookback to analyze commit history
-          lookback: 10
-          
-          # Optional: Configure additional context lines around flag references
-          contextLines: 3
-          
-          # Optional: Configure to ignore case when searching for flag keys
-          ignoreCase: true
-          
-          # Optional: Configure debug mode for troubleshooting
-          debug: false 
+          projKey: ${{ secrets.LD_PROJECT_KEY }} 
