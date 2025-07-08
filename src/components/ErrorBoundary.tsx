@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { useLDClient } from 'launchdarkly-react-client-sdk';
 import './ErrorBoundary.css';
 
 interface Props {
@@ -8,62 +9,42 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
+    errorInfo: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI
-    return { hasError: true, error };
+    return { hasError: true, error, errorInfo: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('ErrorBoundary caught an error:', error);
+    
+    // Store error info for rendering
+    this.setState({ errorInfo });
 
-    // Forward error to LaunchDarkly via the client's observability plugin
-    try {
-      // Get the LaunchDarkly client from window if available
-      const ldClient = (window as any).ldClient;
-      
-      if (ldClient && typeof ldClient.track === 'function') {
-        // Use track to send error information as a custom event
-        ldClient.track('error-boundary-triggered', {
-          errorMessage: error.message,
-          errorStack: error.stack,
-          componentStack: errorInfo.componentStack || 'No component stack available',
-          errorBoundary: 'WeatherSynthErrorBoundary',
-          timestamp: new Date().toISOString(),
-          url: window.location.href,
-        });
-      }
+    // Forward error to LaunchDarkly (to be overridden in subclass)
+    this.trackErrorToLaunchDarkly(error, errorInfo);
+  }
 
-      // Also try the global LDObserve if available (fallback)
-      if (typeof window !== 'undefined' && (window as any).LDObserve) {
-        (window as any).LDObserve.recordError(
-          error.message,
-          'React Error Boundary',
-          { 
-            componentStack: errorInfo.componentStack || 'No component stack available',
-            errorBoundary: 'WeatherSynthErrorBoundary',
-            timestamp: new Date().toISOString(),
-            stack: error.stack,
-            url: window.location.href,
-          }
-        );
-      }
-    } catch (ldError) {
-      console.warn('Failed to record error in LaunchDarkly:', ldError);
-    }
+  protected trackErrorToLaunchDarkly(error: Error, errorInfo: ErrorInfo) {
+    // Base implementation - does nothing
+    // This will be overridden in the subclass
   }
 
   public render() {
     if (this.state.hasError) {
+      const isProduction = process.env.NODE_ENV === 'production';
+      
       return (
-        <div className="error-boundary">
+        <div className="error-boundary" role="alert">
           <div className="error-boundary-content">
             <div className="error-terminal">
               <div className="error-header">
@@ -84,22 +65,21 @@ FATAL SYSTEM ERROR
 `}
                 </pre>
                 <div className="error-details">
-                  <p>🌪️ WEATHER SYNTH ENCOUNTERED AN ERROR</p>
+                  <p>Something went wrong. We apologize for the inconvenience.</p>
                   <p>📡 Error reported to LaunchDarkly</p>
                   <p>🔄 Please refresh the page to continue</p>
-                  {this.state.error && (
+                  {!isProduction && this.state.error && (
                     <details className="error-technical">
                       <summary>Technical Details</summary>
                       <code>{this.state.error.message}</code>
                     </details>
                   )}
                 </div>
-                <button 
-                  className="error-refresh-button"
-                  onClick={() => window.location.reload()}
-                >
-                  [ RESTART SYSTEM ]
-                </button>
+                <a href="/" className="error-refresh-link">
+                  <button className="error-refresh-button">
+                    Refresh Page
+                  </button>
+                </a>
               </div>
             </div>
           </div>
@@ -111,4 +91,66 @@ FATAL SYSTEM ERROR
   }
 }
 
-export default ErrorBoundary; 
+interface ErrorBoundaryWithLDProps extends Props {
+  ldClient?: any;
+}
+
+class ErrorBoundaryWithLD extends ErrorBoundary {
+  private ldClient: any;
+
+  constructor(props: ErrorBoundaryWithLDProps) {
+    super(props);
+    this.ldClient = props.ldClient;
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error);
+    
+    // Store error info for rendering
+    this.setState({ errorInfo });
+
+    // Forward error to LaunchDarkly
+    this.trackErrorToLaunchDarkly(error, errorInfo);
+  }
+
+  protected trackErrorToLaunchDarkly = (error: Error, errorInfo: ErrorInfo) => {
+    try {
+      if (this.ldClient && typeof this.ldClient.track === 'function') {
+        const context = this.ldClient.getContext ? this.ldClient.getContext() : {};
+        
+        // Use custom componentStack from error object if available, otherwise use React's errorInfo
+        const componentStack = (error as any).componentStack || errorInfo.componentStack || 'No component stack available';
+        
+        const trackingData: any = {
+          error_message: error.message,
+          error_stack: error.stack || 'Stack trace not available',
+          component_stack: componentStack,
+          timestamp: new Date().toISOString(),
+          page_url: window.location.href,
+          user_agent: navigator.userAgent,
+        };
+
+        // Only include user context if it exists
+        if (context.key) trackingData.user_key = context.key;
+        if (context.name) trackingData.user_name = context.name;
+        if (context.email) trackingData.user_email = context.email;
+
+        this.ldClient.track('error_boundary_triggered', trackingData);
+      }
+    } catch (ldError) {
+      console.warn('Failed to record error in LaunchDarkly:', ldError);
+    }
+  };
+}
+
+// Functional component wrapper to inject LaunchDarkly client
+const ErrorBoundaryWrapper = (props: Props) => {
+  const ldClient = useLDClient();
+  
+  return React.createElement(ErrorBoundaryWithLD, {
+    ...props,
+    ldClient
+  });
+};
+
+export default ErrorBoundaryWrapper; 

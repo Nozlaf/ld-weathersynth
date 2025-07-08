@@ -13,9 +13,15 @@ const mockUseLDClient = useLDClient as jest.MockedFunction<typeof useLDClient>;
 jest.mock('../../services/weatherService', () => ({
   getCurrentWeather: jest.fn(),
   WeatherAPIError: class WeatherAPIError extends Error {
-    constructor(public type: string, public message: string, public code: number, public provider: string) {
+    constructor(errorType: string, message: string, code: number, provider: string) {
       super(message);
+      this.type = errorType;
+      this.code = code;
+      this.provider = provider;
     }
+    type: string;
+    code: number;
+    provider: string;
   },
 }));
 
@@ -25,28 +31,49 @@ jest.mock('../../hooks/useTheme', () => ({
     theme: 'dark-synth',
     setTheme: jest.fn(),
   }),
+  ThemeContext: {
+    Provider: ({ children }: { children: React.ReactNode }) => children,
+  },
 }));
 
 // Mock other services
 jest.mock('../../services/moonPhaseService', () => ({
+  __esModule: true,
   default: {
     getMoonPhaseEmojiForWeather: jest.fn().mockResolvedValue('🌙'),
   },
 }));
 
-jest.mock('../../services/locationSimulationService', () => ({
+// Use jest.doMock to ensure proper mock timing
+jest.doMock('../../services/locationSimulationService', () => ({
+  __esModule: true,
   default: {
-    subscribe: jest.fn(() => jest.fn()),
+    subscribe: jest.fn().mockImplementation(() => {
+      // Return a function that can be called as unsubscribe
+      return jest.fn();
+    }),
+    getState: jest.fn(() => ({
+      isSimulating: false,
+      activeLocation: null,
+      presetLocations: [],
+    })),
+    startSimulation: jest.fn(),
+    stopSimulation: jest.fn(),
+    isSimulating: jest.fn(() => false),
+    getActiveLocation: jest.fn(() => null),
   },
 }));
 
-jest.mock('../../services/weatherDebugService', () => ({
-  default: {
-    getInstance: jest.fn(() => ({
-      updateRefreshInterval: jest.fn(),
-    })),
-  },
-}));
+jest.mock('../../services/weatherDebugService', () => {
+  return {
+    __esModule: true,
+    default: {
+      getInstance: () => ({
+        updateRefreshInterval: jest.fn(),
+      }),
+    },
+  };
+});
 
 const renderWeatherWidget = (ldClient = createMockLDClient()) => {
   mockUseLDClient.mockReturnValue(ldClient as any);
@@ -80,7 +107,7 @@ describe('WeatherWidget', () => {
     it('shows loading state initially', () => {
       renderWeatherWidget();
       
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      expect(screen.getByText(/L O A D I N G/i)).toBeInTheDocument();
     });
 
     it('displays weather data after loading', async () => {
@@ -90,7 +117,7 @@ describe('WeatherWidget', () => {
       renderWeatherWidget();
       
       await waitFor(() => {
-        expect(screen.getByText('Clear sky')).toBeInTheDocument();
+        expect(screen.getByText('CLEAR SKY')).toBeInTheDocument();
         expect(screen.getByText('New York, NY')).toBeInTheDocument();
         expect(screen.getByText('22°C')).toBeInTheDocument();
       });
@@ -230,10 +257,10 @@ describe('WeatherWidget', () => {
       renderWeatherWidget();
       
       await waitFor(() => {
-        expect(screen.getByText('Clear sky')).toBeInTheDocument();
+        expect(screen.getByText('CLEAR SKY')).toBeInTheDocument();
       });
       
-      const optionsButton = screen.getByText('[OPTIONS]');
+      const optionsButton = screen.getByText('[ OPTIONS ]');
       fireEvent.click(optionsButton);
       
       await waitFor(() => {
@@ -248,17 +275,17 @@ describe('WeatherWidget', () => {
       renderWeatherWidget();
       
       await waitFor(() => {
-        expect(screen.getByText('Clear sky')).toBeInTheDocument();
+        expect(screen.getByText('CLEAR SKY')).toBeInTheDocument();
       });
       
-      const optionsButton = screen.getByText('[OPTIONS]');
+      const optionsButton = screen.getByText('[ OPTIONS ]');
       fireEvent.click(optionsButton);
       
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
       
-      const closeButton = screen.getByText('×');
+      const closeButton = screen.getByText('[ CLOSE ]');
       fireEvent.click(closeButton);
       
       await waitFor(() => {
@@ -286,7 +313,7 @@ describe('WeatherWidget', () => {
       renderWeatherWidget();
       
       await waitFor(() => {
-        expect(screen.getByText('Demo Weather')).toBeInTheDocument();
+        expect(screen.getByText('DEMO WEATHER')).toBeInTheDocument();
         expect(screen.getByText('Demo City, XX')).toBeInTheDocument();
       });
     });
@@ -327,7 +354,7 @@ describe('WeatherWidget', () => {
       
       await waitFor(() => {
         expect(screen.getByRole('main')).toBeInTheDocument();
-        expect(screen.getByText('[OPTIONS]')).toBeInTheDocument();
+        expect(screen.getByText('[ OPTIONS ]')).toBeInTheDocument();
       });
     });
   });

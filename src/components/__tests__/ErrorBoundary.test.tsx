@@ -128,16 +128,19 @@ describe('ErrorBoundary', () => {
         timestamp: expect.any(String),
         page_url: expect.any(String),
         user_agent: expect.any(String),
+        user_key: 'test-user',
+        user_name: 'Test User',
+        user_email: 'test@example.com',
       });
     });
 
     it('includes user context in error tracking', () => {
       const mockClient = createMockLDClient();
-      mockClient.getContext.mockReturnValue({
+      mockClient.getContext = jest.fn(() => ({
         key: 'test-user-123',
         name: 'Test User',
         email: 'test@example.com',
-      });
+      }));
       mockUseLDClient.mockReturnValue(mockClient as any);
 
       render(

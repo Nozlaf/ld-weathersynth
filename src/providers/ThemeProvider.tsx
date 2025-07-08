@@ -40,22 +40,28 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   };
 
+  // Generate consistent session ID for analytics
+  const [sessionId] = useState(() => {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  });
+
   // Helper function to track theme changes in both Google Analytics and LaunchDarkly
   const trackThemeChange = (previousTheme: Theme, newTheme: Theme, changeMethod: string, flagValue?: string) => {
     const eventData = {
-      previous_theme: previousTheme,
-      new_theme: newTheme,
+      from_theme: previousTheme,
+      to_theme: newTheme,
       change_method: changeMethod,
+      session_id: sessionId,
       ...(flagValue && { flag_value: flagValue })
     };
 
     // Track in Google Analytics
-    trackEvent('theme-change', eventData);
+    trackEvent('theme_change', eventData);
 
     // Track in LaunchDarkly
     if (ldClient && typeof ldClient.track === 'function') {
       try {
-        ldClient.track('theme-change', eventData);
+        ldClient.track('theme_change', eventData);
       } catch (error) {
         console.warn('Failed to track theme change in LaunchDarkly:', error);
       }
@@ -64,7 +70,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check for user's manual theme preference first
-    const savedTheme = localStorage.getItem('weather-app-theme') as Theme | null;
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
     
     if (!ldClient) {
       // LaunchDarkly not available, use saved theme or default dark-synth theme
@@ -74,22 +80,28 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     // LaunchDarkly client is available
     const flagTheme = ldClient.variation('default-theme', 'dark');
+    const mappedLDTheme = mapLDTheme(flagTheme);
 
-    // Use saved theme if available, otherwise use mapped LaunchDarkly flag
-    const finalTheme = savedTheme || mapLDTheme(flagTheme);
-
-    // Validate final theme value
+    // Validate saved theme first
     const validThemes: Theme[] = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura', 'winter', 'heart-of-gold'];
-    if (validThemes.includes(finalTheme)) {
-      setTheme(finalTheme);
+    let finalTheme: Theme;
+
+    if (savedTheme && validThemes.includes(savedTheme)) {
+      // Use valid saved theme
+      finalTheme = savedTheme;
     } else {
-      console.warn('ThemeProvider - Invalid theme value, falling back to dark-synth. Theme was:', finalTheme);
-      setTheme('dark-synth');
+      // Invalid or no saved theme, use LaunchDarkly default
+      if (savedTheme) {
+        console.warn('ThemeProvider - Invalid theme value in localStorage, falling back to LaunchDarkly default. Theme was:', savedTheme);
+      }
+      finalTheme = mappedLDTheme;
     }
+
+    setTheme(finalTheme);
 
     // Listen for flag changes (only apply if no manual override)
     const flagChangeHandler = (changes: any) => {
-      if (changes['default-theme'] && !localStorage.getItem('weather-app-theme')) {
+      if (changes['default-theme'] && !localStorage.getItem('theme')) {
         const newFlagTheme = changes['default-theme'].current;
         const mappedTheme = mapLDTheme(newFlagTheme);
         const previousTheme = theme;
@@ -107,6 +119,21 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       ldClient.off('change', flagChangeHandler);
     };
   }, [ldClient]);
+
+  // Update document body class when theme changes
+  useEffect(() => {
+    // Remove all theme classes
+    const themeClasses = ['dark-synth', 'dark-green', 'dark-orange', 'light', 'grayscale', 'dark-grayscale', 'sakura', 'winter', 'heart-of-gold'];
+    themeClasses.forEach(cls => document.body.classList.remove(cls));
+    
+    // Add current theme class
+    document.body.classList.add(theme);
+    
+    return () => {
+      // Cleanup: remove all theme classes when component unmounts
+      themeClasses.forEach(cls => document.body.classList.remove(cls));
+    };
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => {
@@ -143,12 +170,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   const setThemeManually = (newTheme: Theme) => {
-    localStorage.setItem('weather-app-theme', newTheme);
+    try {
+      localStorage.setItem('theme', newTheme);
+    } catch (error) {
+      console.warn('Failed to save theme to localStorage:', error);
+    }
     setTheme(newTheme);
   };
 
   const resetThemeToDefault = () => {
-    localStorage.removeItem('weather-app-theme');
+    try {
+      localStorage.removeItem('theme');
+    } catch (error) {
+      console.warn('Failed to remove theme from localStorage:', error);
+    }
     
     let newTheme: Theme;
     if (ldClient) {

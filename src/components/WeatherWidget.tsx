@@ -148,7 +148,12 @@ const WeatherWidget: React.FC = () => {
       console.log('🔍 DEBUG: WeatherWidget cleanup');
       window.removeEventListener('error', handleError);
       clearInterval(interval);
-      unsubscribeLocationSimulation();
+      // Defensive check to ensure unsubscribe function exists
+      if (typeof unsubscribeLocationSimulation === 'function') {
+        unsubscribeLocationSimulation();
+      } else {
+        console.warn('🔍 DEBUG: unsubscribeLocationSimulation is not a function:', typeof unsubscribeLocationSimulation);
+      }
     };
   }, [ldClient]);
 
@@ -264,7 +269,7 @@ const WeatherWidget: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`}>
+      <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`} role="main">
         <div className="terminal-frame">
           <div className="terminal-header">
             <span className="terminal-title">WEATHER.SYS</span>
@@ -294,7 +299,7 @@ const WeatherWidget: React.FC = () => {
 
   if (error) {
     return (
-      <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`}>
+      <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`} role="main">
         <div className="terminal-frame">
           <div className="terminal-header">
             <span className="terminal-title">WEATHER.SYS</span>
@@ -332,7 +337,7 @@ SYSTEM ERROR: ${error}
   if (!weather) return null;
 
   return (
-    <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`}>
+    <div className={`weather-widget ${theme} ${enableAnimations ? 'animated' : ''}`} role="main">
       <div className="terminal-frame">
         <div className="terminal-header">
           <span className="terminal-title">WEATHER.SYS</span>

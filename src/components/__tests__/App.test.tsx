@@ -4,7 +4,17 @@ import App from '../../App';
 
 // Mock LaunchDarkly
 jest.mock('launchdarkly-react-client-sdk', () => ({
-  withLDProvider: (component: React.ComponentType) => component,
+  withLDProvider: (config: any) => (component: React.ComponentType) => component,
+  useLDClient: jest.fn(() => ({
+    variation: jest.fn(),
+    allFlags: jest.fn(() => ({})),
+    on: jest.fn(),
+    off: jest.fn(),
+    track: jest.fn(),
+    identify: jest.fn(),
+    flush: jest.fn(),
+    close: jest.fn(),
+  })),
 }));
 
 describe('App', () => {

@@ -133,10 +133,10 @@ const OptionsModal: React.FC<OptionsModalProps> = ({ isOpen, onClose, temperatur
 
   return (
     <div className="options-modal-backdrop" onClick={handleBackdropClick}>
-      <div className={`options-modal ${theme}`}>
+      <div className={`options-modal ${theme}`} role="dialog" aria-labelledby="options-title">
         <div className="options-terminal-frame">
           <div className="options-terminal-header">
-            <span className="options-terminal-title">sys.cfg</span>
+            <span className="options-terminal-title" id="options-title">sys.cfg</span>
             <div className="options-terminal-controls">
               <span className="control-dot red"></span>
               <span className="control-dot yellow"></span>
