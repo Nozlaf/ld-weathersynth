@@ -27,7 +27,7 @@ const weatherDebug = WeatherDebugService.getInstance();
 // Backend API configuration
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '' // Same origin in production 
-  : process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001'; // Backend server in development
+  : 'http://localhost:3001'; // Backend server in development
 
 export const getCurrentLocation = (): Promise<Location> => {
   return new Promise((resolve, reject) => {

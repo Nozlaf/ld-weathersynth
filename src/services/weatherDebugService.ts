@@ -123,7 +123,7 @@ class WeatherDebugService {
     try {
       const API_BASE_URL = process.env.NODE_ENV === 'production' 
         ? '' // Same origin in production 
-        : process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001'; // Backend server in development
+        : 'http://localhost:3001'; // Backend server in development
       
       const response = await fetch(`${API_BASE_URL}/api/status`);
       
