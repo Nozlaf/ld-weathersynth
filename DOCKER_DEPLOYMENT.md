@@ -292,7 +292,7 @@ services:
     deploy:
       replicas: 3
     ports:
-      - "3000-3002:80"
+      - "3000:80"
 ```
 
 ### Load Balancer Integration

@@ -690,7 +690,7 @@ npm run build
 pm2 start build/static/js/main.*.js --name weather-synth
 
 # Or serve with a static server
-npx serve -s build -l 3002
+npx serve -s build -l 3000
 ```
 
 ### Environment Variables
@@ -821,7 +821,7 @@ This project is licensed under the MIT License.
 
 Access the live application at:
 - **Local Development**: http://localhost:3000
-- **Production**: http://localhost:3002 (or your deployment URL)
+- **Production**: http://localhost:3000 (or your deployment URL)
 
 **Quick Start:**
 1. Visit the app

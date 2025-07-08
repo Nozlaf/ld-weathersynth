@@ -8,7 +8,7 @@ const WeatherProviders = require('./weatherProviders');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 
 // Initialize LaunchDarkly client
 let ldClient = null;
