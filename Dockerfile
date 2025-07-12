@@ -1,4 +1,4 @@
-# Multi-stage Docker build for Weather Synth with Backend API
+# Multi-stage Docker build for Weather Synth with Nginx reverse proxy
 # Stage 1: Build the React application
 FROM node:18-alpine AS frontend-build
 
@@ -8,7 +8,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for building)
+# Install dependencies
 RUN npm ci
 
 # Copy source code
@@ -20,6 +20,7 @@ RUN npm run build
 # Stage 2: Backend Server Setup
 FROM node:18-alpine AS backend-build
 
+# Set working directory
 WORKDIR /app/server
 
 # Copy server package files
@@ -28,21 +29,25 @@ COPY server/package*.json ./
 # Install server dependencies
 RUN npm ci --only=production
 
-# Stage 3: Production with Node.js backend server
-FROM node:18-alpine AS production
+# Stage 3: Final production image with Nginx
+FROM nginx:alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install Node.js for the backend
+RUN apk add --no-cache nodejs npm
 
+# Create app directory structure
 WORKDIR /app
 
-# Copy built React app from frontend builder
-COPY --from=frontend-build /app/build ./build
+# Copy built React app to nginx html directory
+COPY --from=frontend-build /app/build /usr/share/nginx/html
 
-# Copy server files and dependencies
+# Copy backend files and dependencies
 COPY --from=backend-build /app/server/node_modules ./server/node_modules
 COPY server/server.js ./server/
 COPY server/package*.json ./server/
+
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -51,20 +56,23 @@ RUN addgroup -g 1001 -S nodejs && \
 # Change ownership of app directory
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
-USER nodejs
+# Create startup script
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'cd /app/server && node server.js &' >> /start.sh && \
+    echo 'nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
-# Expose port 3001 (backend server)
-EXPOSE 3001
+# Expose port 80
+EXPOSE 80
 
 # Add labels for better container management
 LABEL maintainer="Nozlaf"
-LABEL description="Weather Synth - Retro 80s Weather Terminal App with Backend API"
+LABEL description="Weather Synth - Retro 80s Weather Terminal App with Nginx Reverse Proxy"
 LABEL version="1.2.0"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3001/api/health || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
 
-# Start the backend server (serves both API and static files)
-CMD ["node", "server/server.js"] 
+# Start both nginx and backend server
+CMD ["/start.sh"] 

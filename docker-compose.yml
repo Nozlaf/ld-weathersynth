@@ -2,55 +2,38 @@ version: '3.8'
 
 services:
   weather-synth:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
-      target: production
-    image: weather-synth:latest
-    container_name: weather-synth-app
-    restart: unless-stopped
     ports:
-      - "3000:3001"
+      - "3000:80"
     environment:
       - NODE_ENV=production
-      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
-    env_file:
-      - .env
-    networks:
-      - weather-synth-network
-    volumes:
-      # Optional: Mount logs for debugging
-      - ./logs:/app/logs
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.weather-synth.rule=Host(`weather.localhost`)"
-      - "traefik.http.routers.weather-synth.entrypoints=web"
-      - "traefik.http.services.weather-synth.loadbalancer.server.port=3001"
+      - PORT=3001
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.weather-synth.rule=Host(`weather-synth.local`)"
+      - "traefik.http.services.weather-synth.loadbalancer.server.port=80"
 
-  # Optional: Add Traefik reverse proxy for production
-  # traefik:
-  #   image: traefik:v2.9
-  #   container_name: weather-synth-traefik
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "8080:8080"
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - ./traefik.yml:/traefik.yml:ro
-  #   networks:
-  #     - weather-synth-network
-
-networks:
-  weather-synth-network:
-    driver: bridge
-
-volumes:
-  weather-synth-logs:
-    driver: local 
+  # Development service (optional)
+  weather-synth-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend-build
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev
+    volumes:
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro 
