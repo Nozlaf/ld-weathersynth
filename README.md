@@ -735,6 +735,52 @@ pm2 start build/static/js/main.*.js --name weather-synth
 npx serve -s build -l 3000
 ```
 
+### 🐳 Docker Deployment
+
+The app includes Docker support with runtime environment variable injection:
+
+#### Quick Start with Docker
+
+```bash
+# Build the Docker image
+docker build -t weather-synth .
+
+# Run with environment variables
+docker run -d \
+  -e LAUNCHDARKLY_SDK_KEY=your-server-sdk-key \
+  -e REACT_APP_LAUNCHDARKLY_CLIENT_ID=your-client-sdk-key \
+  -e REACT_APP_OPENWEATHER_API_KEY=your-openweather-key \
+  -p 3000:80 \
+  weather-synth
+```
+
+#### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  weather-synth:
+    image: weather-synth:latest
+    environment:
+      - LAUNCHDARKLY_SDK_KEY=your-server-sdk-key
+      - REACT_APP_LAUNCHDARKLY_CLIENT_ID=your-client-sdk-key
+      - REACT_APP_OPENWEATHER_API_KEY=your-openweather-key
+    ports:
+      - "3000:80"
+```
+
+#### QNAP Container Station
+
+1. Import the `weather-synth-qnap.tar` image
+2. Create a new container
+3. Add environment variables in the "Environment" tab
+4. Set port mapping to `3000:80`
+5. Start the container
+
+#### Runtime Environment Variables
+
+The Docker container supports runtime environment variable injection, allowing you to configure the app without rebuilding the image. See [DOCKER_ENVIRONMENT_VARIABLES.md](DOCKER_ENVIRONMENT_VARIABLES.md) for complete documentation.
+
 ### Environment Variables
 
 #### Frontend (React) Variables

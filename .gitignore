@@ -40,3 +40,8 @@ yarn-error.log*
 
 # OS generated files
 Thumbs.db
+
+# Docker image tar files
+*.tar
+*.tar.gz
+*.tar.bz2

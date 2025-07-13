@@ -1,5 +1,15 @@
 import { LDContext } from 'launchdarkly-react-client-sdk';
 
+// Declare process for TypeScript
+declare const process: {
+  env: {
+    REACT_APP_LAUNCHDARKLY_CLIENT_ID?: string;
+    REACT_APP_VERSION?: string;
+    NODE_ENV?: string;
+    [key: string]: string | undefined;
+  };
+};
+
 export const getSDKKey = (): string => {
   const sdkKey = process.env.REACT_APP_LAUNCHDARKLY_CLIENT_ID;
   if (!sdkKey) {

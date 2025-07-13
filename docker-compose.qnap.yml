@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  weather-synth:
+    image: weather-synth:qnap
+    container_name: weather-synth-qnap
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - LAUNCHDARKLY_SDK_KEY=${LAUNCHDARKLY_SDK_KEY}
+      - REACT_APP_LAUNCHDARKLY_CLIENT_ID=${REACT_APP_LAUNCHDARKLY_CLIENT_ID}
+    # QNAP-specific optimizations
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    # Health check for QNAP monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Labels for QNAP Container Station
+    labels:
+      - "qnap.description=Weather Synth - Retro 80s Weather Terminal App"
+      - "qnap.author=Nozlaf"
+      - "qnap.version=1.2.0"
+      - "qnap.category=Weather"
+      - "qnap.icon=https://raw.githubusercontent.com/your-repo/weather-synth/main/icon.png"
+    # Optional: Mount a volume for persistent data (if needed)
+    # volumes:
+    #   - ./data:/app/data:rw 

@@ -10,6 +10,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - LAUNCHDARKLY_SDK_KEY=${LAUNCHDARKLY_SDK_KEY:-"demo-server-key"}
+      - REACT_APP_LAUNCHDARKLY_CLIENT_ID=${REACT_APP_LAUNCHDARKLY_CLIENT_ID:-"your-client-sdk-key-here"}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
