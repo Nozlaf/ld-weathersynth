@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "dependencies": {
-    "@launchdarkly/observability": "^0.3.2",
+    "@launchdarkly/observability": "^0.3.7",
     "@launchdarkly/session-replay": "^0.3.2",
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.8",
