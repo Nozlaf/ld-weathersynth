@@ -1,0 +1,125 @@
+{
+  "name": "Weather Synth",
+  "description": "Retro 80s-style weather terminal application with LaunchDarkly feature flags integration",
+  "version": "1.2.0",
+  "author": "Nozlaf",
+  "category": "Weather",
+  "icon": "https://raw.githubusercontent.com/Nozlaf/ld-weathersynth/main/icon.png",
+  "image": "weather-synth:qnap",
+  "ports": [
+    {
+      "containerPort": 80,
+      "hostPort": 6001,
+      "protocol": "tcp"
+    }
+  ],
+  "environment": [
+    {
+      "name": "NODE_ENV",
+      "value": "production",
+      "description": "Node.js environment"
+    },
+    {
+      "name": "PORT",
+      "value": "3001",
+      "description": "Backend server port"
+    },
+    {
+      "name": "LAUNCHDARKLY_SDK_KEY",
+      "value": "your-server-sdk-key-here",
+      "description": "LaunchDarkly server-side SDK key (required for feature flags)",
+      "required": true
+    },
+    {
+      "name": "REACT_APP_LAUNCHDARKLY_CLIENT_ID",
+      "value": "your-client-sdk-key-here",
+      "description": "LaunchDarkly client-side SDK key (required for frontend features)",
+      "required": true
+    },
+    {
+      "name": "REACT_APP_OPENWEATHER_API_KEY",
+      "value": "",
+      "description": "OpenWeather API key (optional - app works without it)"
+    },
+    {
+      "name": "REACT_APP_VERSION",
+      "value": "1.2.0",
+      "description": "Application version"
+    }
+  ],
+  "volumes": [
+    {
+      "name": "app-data",
+      "containerPath": "/app/data",
+      "hostPath": "/share/Container/weather-synth/data",
+      "mode": "rw",
+      "description": "Application data storage"
+    }
+  ],
+  "restartPolicy": "unless-stopped",
+  "resources": {
+    "memory": {
+      "limit": "512M",
+      "reservation": "256M"
+    },
+    "cpu": {
+      "limit": "0.5",
+      "reservation": "0.25"
+    }
+  },
+  "healthCheck": {
+    "test": ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"],
+    "interval": "30s",
+    "timeout": "10s",
+    "retries": 3,
+    "startPeriod": "40s"
+  },
+  "labels": {
+    "qnap.description": "Retro 80s-style weather terminal with LaunchDarkly feature flags",
+    "qnap.author": "Nozlaf",
+    "qnap.version": "1.2.0",
+    "qnap.category": "Weather",
+    "qnap.icon": "https://raw.githubusercontent.com/Nozlaf/ld-weathersynth/main/icon.png",
+    "qnap.website": "https://github.com/Nozlaf/ld-weathersynth",
+    "qnap.documentation": "https://github.com/Nozlaf/ld-weathersynth/blob/main/README.md"
+  },
+  "network": {
+    "mode": "bridge",
+    "hostname": "weather-synth"
+  },
+  "capabilities": [],
+  "devices": [],
+  "privileged": false,
+  "readOnly": false,
+  "tty": false,
+  "openStdin": false,
+  "workingDir": "/app",
+  "entrypoint": ["/start.sh"],
+  "cmd": [],
+  "user": "nodejs:nodejs",
+  "exposedPorts": {
+    "80/tcp": {}
+  },
+  "stopSignal": "SIGTERM",
+  "stopTimeout": 10,
+  "ulimits": [
+    {
+      "name": "nofile",
+      "soft": 1024,
+      "hard": 2048
+    }
+  ],
+  "logConfig": {
+    "type": "json-file",
+    "config": {
+      "max-size": "10m",
+      "max-file": "3"
+    }
+  },
+  "annotations": {
+    "qnap.app.template": "true",
+    "qnap.app.type": "weather",
+    "qnap.app.features": "launchdarkly,weather-api,retro-ui",
+    "qnap.app.requirements": "launchdarkly-sdk-keys"
+  }
+} 

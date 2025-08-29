@@ -130,7 +130,7 @@ setInterval(cleanupExpiredCache, 30 * 60 * 1000);
 const getWeatherProviderConfig = (ldFlag = null) => {
   // Default configuration with multiple fallbacks
   const defaultConfig = {
-    primary: 'openweathermap',
+    primary: 'openweathermap', // API 2.5 (free tier)
     fallbacks: ['open-meteo', 'visual-crossing']
   };
 
@@ -365,6 +365,197 @@ const getWeatherWithFallback = async (lat, lon, ldFlag = null, userContext = nul
   };
 };
 
+/**
+ * Get forecast data using the configured provider with fallback support
+ * Now includes upstream latency tracking
+ */
+const getForecastWithFallback = async (lat, lon, ldFlag = null, userContext = null) => {
+  const config = getWeatherProviderConfig(ldFlag);
+  const availableProviders = weatherProviders.getAvailableProviders();
+  
+  console.log(`Forecast provider config: ${JSON.stringify(config)}`);
+  console.log(`Available providers: ${availableProviders.join(', ')}`);
+
+  // Try primary provider first
+  if (availableProviders.includes(config.primary)) {
+    try {
+      console.log(`Attempting to use primary provider: ${config.primary}`);
+      const upstreamStartTime = Date.now();
+      const data = await weatherProviders.getForecast(config.primary, lat, lon);
+      const upstreamLatency = Date.now() - upstreamStartTime;
+      
+      console.log(`Successfully fetched forecast from primary provider: ${config.primary} (${upstreamLatency}ms)`);
+      
+      // Track upstream latency to LaunchDarkly
+      trackMetric('upstream_latency', userContext, {
+        latency_ms: upstreamLatency,
+        provider: config.primary,
+        provider_type: 'primary',
+        success: true,
+        location: `${lat},${lon}`,
+        timestamp: new Date().toISOString()
+      });
+      
+      return { ...data, upstreamLatency };
+    } catch (error) {
+      const upstreamLatency = Date.now() - Date.now(); // Approximate error latency
+      console.error(`Primary provider ${config.primary} failed:`, error.message);
+      
+      // Track failed upstream latency
+      trackMetric('upstream_latency', userContext, {
+        latency_ms: upstreamLatency,
+        provider: config.primary,
+        provider_type: 'primary',
+        success: false,
+        error: error.message,
+        location: `${lat},${lon}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  } else {
+    console.log(`Primary provider ${config.primary} not available`);
+  }
+
+  // Try each fallback provider in order
+  if (config.fallbacks && Array.isArray(config.fallbacks)) {
+    for (let i = 0; i < config.fallbacks.length; i++) {
+      const fallbackProvider = config.fallbacks[i];
+      
+      if (availableProviders.includes(fallbackProvider)) {
+        try {
+          console.log(`Attempting to use fallback provider ${i + 1}/${config.fallbacks.length}: ${fallbackProvider}`);
+          const upstreamStartTime = Date.now();
+          const data = await weatherProviders.getForecast(fallbackProvider, lat, lon);
+          const upstreamLatency = Date.now() - upstreamStartTime;
+          
+          console.log(`Successfully fetched forecast from fallback provider: ${fallbackProvider} (${upstreamLatency}ms)`);
+          
+          // Track upstream latency to LaunchDarkly
+          trackMetric('upstream_latency', userContext, {
+            latency_ms: upstreamLatency,
+            provider: fallbackProvider,
+            provider_type: `fallback-${i + 1}`,
+            success: true,
+            location: `${lat},${lon}`,
+            timestamp: new Date().toISOString()
+          });
+          
+          return { ...data, upstreamLatency };
+        } catch (error) {
+          const upstreamLatency = Date.now() - Date.now(); // Approximate error latency
+          console.error(`Fallback provider ${fallbackProvider} failed:`, error.message);
+          
+          // Track failed upstream latency
+          trackMetric('upstream_latency', userContext, {
+            latency_ms: upstreamLatency,
+            provider: fallbackProvider,
+            provider_type: `fallback-${i + 1}`,
+            success: false,
+            error: error.message,
+            location: `${lat},${lon}`,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        console.log(`Fallback provider ${fallbackProvider} not available`);
+      }
+    }
+  }
+  // Legacy support for single fallback
+  else if (config.fallback && availableProviders.includes(config.fallback)) {
+    try {
+      console.log(`Attempting to use legacy fallback provider: ${config.fallback}`);
+      const upstreamStartTime = Date.now();
+      const data = await weatherProviders.getForecast(config.fallback, lat, lon);
+      const upstreamLatency = Date.now() - upstreamStartTime;
+      
+      console.log(`Successfully fetched forecast from legacy fallback provider: ${config.fallback} (${upstreamLatency}ms)`);
+      
+      // Track upstream latency to LaunchDarkly
+      trackMetric('upstream_latency', userContext, {
+        latency_ms: upstreamLatency,
+        provider: config.fallback,
+        provider_type: 'fallback-legacy',
+        success: true,
+        location: `${lat},${lon}`,
+        timestamp: new Date().toISOString()
+      });
+      
+      return { ...data, upstreamLatency };
+    } catch (error) {
+      const upstreamLatency = Date.now() - Date.now(); // Approximate error latency
+      console.error(`Legacy fallback provider ${config.fallback} failed:`, error.message);
+      
+      // Track failed upstream latency
+      trackMetric('upstream_latency', userContext, {
+        latency_ms: upstreamLatency,
+        provider: config.fallback,
+        provider_type: 'fallback-legacy',
+        success: false,
+        error: error.message,
+        location: `${lat},${lon}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  // If primary and all fallbacks fail, try any remaining available provider
+  const configuredProviders = [config.primary, ...(config.fallbacks || [])];
+  if (config.fallback) configuredProviders.push(config.fallback); // Include legacy fallback
+  
+  for (const provider of availableProviders) {
+    if (!configuredProviders.includes(provider)) {
+      try {
+        console.log(`Attempting to use emergency provider: ${provider}`);
+        const upstreamStartTime = Date.now();
+        const data = await weatherProviders.getForecast(provider, lat, lon);
+        const upstreamLatency = Date.now() - upstreamStartTime;
+        
+        console.log(`Successfully fetched forecast from emergency provider: ${provider} (${upstreamLatency}ms)`);
+        
+        // Track upstream latency to LaunchDarkly
+        trackMetric('upstream_latency', userContext, {
+          latency_ms: upstreamLatency,
+          provider: provider,
+          provider_type: 'emergency',
+          success: true,
+          location: `${lat},${lon}`,
+          timestamp: new Date().toISOString()
+        });
+        
+        return { ...data, upstreamLatency };
+      } catch (error) {
+        console.error(`Emergency provider ${provider} failed:`, error.message);
+      }
+    }
+  }
+
+  // If all providers fail, return mock data
+  console.log('All forecast providers failed, returning mock data');
+  
+  // Track mock data usage
+  trackMetric('upstream_latency', userContext, {
+    latency_ms: 0,
+    provider: 'mock',
+    provider_type: 'mock',
+    success: true,
+    location: `${lat},${lon}`,
+    timestamp: new Date().toISOString()
+  });
+  
+  return {
+    temperature: 22,
+    description: 'Sunny (Mock Data)',
+    location: 'Demo City, XX',
+    humidity: 65,
+    windSpeed: 12,
+    icon: '01d',
+    provider: 'mock',
+    mockData: true,
+    upstreamLatency: 0
+  };
+};
+
 const rateLimit = (req, res, next) => {
   const clientIP = req.ip || req.connection.remoteAddress;
   const now = Date.now();
@@ -555,6 +746,141 @@ app.get('/api/weather', rateLimit, async (req, res) => {
     res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch weather data'
+    });
+  }
+});
+
+// Weather forecast API endpoint (5-hour forecast)
+app.get('/api/weather/forecast', rateLimit, async (req, res) => {
+  const internalStartTime = Date.now();
+  
+  try {
+    const { lat, lon, userKey, userName, userEmail } = req.query;
+    
+    // Build user context from query parameters
+    const userContext = {
+      key: userKey || 'anonymous',
+      name: userName || 'Anonymous User',
+      email: userEmail || undefined,
+      custom: {
+        request_id: `forecast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_agent: req.headers['user-agent'],
+        ip_address: req.ip || req.connection.remoteAddress,
+        endpoint: '/api/weather/forecast'
+      }
+    };
+    
+    // Validate input parameters
+    if (!lat || !lon) {
+      const internalLatency = Date.now() - internalStartTime;
+      trackMetric('internal_latency', userContext, {
+        latency_ms: internalLatency,
+        endpoint: '/api/weather/forecast',
+        success: false,
+        error: 'Missing parameters',
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(400).json({
+        error: 'Missing parameters',
+        message: 'Latitude and longitude are required'
+      });
+    }
+    
+    // Validate coordinate ranges
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
+    
+    if (isNaN(latitude) || isNaN(longitude) || 
+        latitude < -90 || latitude > 90 || 
+        longitude < -180 || longitude > 180) {
+      const internalLatency = Date.now() - internalStartTime;
+      trackMetric('internal_latency', userContext, {
+        latency_ms: internalLatency,
+        endpoint: '/api/weather/forecast',
+        success: false,
+        error: 'Invalid coordinates',
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(400).json({
+        error: 'Invalid coordinates',
+        message: 'Invalid latitude or longitude values'
+      });
+    }
+    
+    console.log(`Fetching 5-hour forecast for ${latitude}, ${longitude}`);
+    
+    // Get weather provider configuration from LaunchDarkly flag
+    let weatherProviderFlag = null;
+    if (ldClient) {
+      try {
+        const ldContext = {
+          kind: 'user',
+          key: userContext.key,
+          name: userContext.name,
+          email: userContext.email
+        };
+        weatherProviderFlag = await ldClient.variation('weather-api-provider', ldContext, null);
+      } catch (error) {
+        console.warn('Failed to fetch weather-api-provider flag from LaunchDarkly:', error.message);
+      }
+    }
+    
+    // Fallback to environment variable if LaunchDarkly flag not available
+    if (!weatherProviderFlag && process.env.WEATHER_PROVIDER_CONFIG) {
+      try {
+        weatherProviderFlag = JSON.parse(process.env.WEATHER_PROVIDER_CONFIG);
+      } catch (error) {
+        console.warn('Failed to parse WEATHER_PROVIDER_CONFIG:', error.message);
+      }
+    }
+    
+    // Get forecast data using the configured providers
+    const forecastData = await getForecastWithFallback(latitude, longitude, weatherProviderFlag, userContext);
+    
+    const internalLatency = Date.now() - internalStartTime;
+    
+    // Track internal latency for successful response
+    trackMetric('internal_latency', userContext, {
+      latency_ms: internalLatency,
+      endpoint: '/api/weather/forecast',
+      success: true,
+      cached: false,
+      provider: forecastData.provider,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json(forecastData);
+    
+  } catch (error) {
+    console.error('Forecast API error:', error);
+    const internalLatency = Date.now() - internalStartTime;
+    
+    // Track internal latency for error response
+    const userContext = {
+      key: req.query.userKey || 'anonymous',
+      name: req.query.userName || 'Anonymous User',
+      email: req.query.userEmail || undefined,
+      custom: {
+        request_id: `forecast_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_agent: req.headers['user-agent'],
+        ip_address: req.ip || req.connection.remoteAddress,
+        endpoint: '/api/weather/forecast'
+      }
+    };
+    
+    trackMetric('internal_latency', userContext, {
+      latency_ms: internalLatency,
+      endpoint: '/api/weather/forecast',
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch forecast data'
     });
   }
 });

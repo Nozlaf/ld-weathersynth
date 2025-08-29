@@ -2,6 +2,15 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import './ErrorBoundary.css';
 
+// Declare LaunchDarkly Observability SDK types
+declare global {
+  interface Window {
+    LDObserve?: {
+      recordError: (error: Error, message: string, metadata?: Record<string, any>) => void;
+    };
+  }
+}
+
 interface Props {
   children: ReactNode;
 }
@@ -137,10 +146,58 @@ class ErrorBoundaryWithLD extends ErrorBoundary {
 
         this.ldClient.track('error_boundary_triggered', trackingData);
       }
+
+      // 🎯 Record error with stack trace using LaunchDarkly Observability SDK
+      if (window.LDObserve && typeof window.LDObserve.recordError === 'function') {
+        const errorMessage = `ErrorBoundary caught: ${error.message}`;
+        const componentInfo = this.getComponentInfo(errorInfo);
+        
+        window.LDObserve.recordError(error, errorMessage, {
+          component: componentInfo.component,
+          file: componentInfo.file,
+          line: componentInfo.line,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack || 'No component stack available',
+          pageUrl: window.location.href,
+          userAgent: navigator.userAgent,
+          timestamp: new Date().toISOString()
+        });
+      }
     } catch (ldError) {
       console.warn('Failed to record error in LaunchDarkly:', ldError);
     }
   };
+
+  // Helper method to extract component information from error
+  private getComponentInfo(errorInfo: ErrorInfo): { component: string; file: string; line: string } {
+    try {
+      // Parse component stack to extract component name and location
+      const stackLines = (errorInfo.componentStack || '').split('\n');
+      const firstLine = stackLines[1] || ''; // Skip the first line (usually "in ErrorBoundary")
+      
+      // Extract component name and file info
+      const match = firstLine.match(/in\s+(\w+)\s+\(at\s+(.+):(\d+)\)/);
+      if (match) {
+        return {
+          component: match[1] || 'UnknownComponent',
+          file: match[2] || 'UnknownFile',
+          line: match[3] || 'UnknownLine'
+        };
+      }
+      
+      return {
+        component: 'ErrorBoundary',
+        file: 'ErrorBoundary.tsx',
+        line: 'Unknown'
+      };
+    } catch (parseError) {
+      return {
+        component: 'ErrorBoundary',
+        file: 'ErrorBoundary.tsx',
+        line: 'Unknown'
+      };
+    }
+  }
 }
 
 // Functional component wrapper to inject LaunchDarkly client

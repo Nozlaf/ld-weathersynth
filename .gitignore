@@ -45,3 +45,9 @@ Thumbs.db
 *.tar
 *.tar.gz
 *.tar.bz2
+*.sh
+nginx*
+.registry.password
+*.config
+*.config
+QNAP*

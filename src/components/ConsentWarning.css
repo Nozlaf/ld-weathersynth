@@ -1,0 +1,164 @@
+.consent-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.consent-warning.closing {
+  animation: fadeOut 0.5s ease-in-out;
+}
+
+.consent-terminal {
+  background-color: var(--terminal-bg);
+  border: 2px solid var(--terminal-border);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.consent-header {
+  background-color: var(--terminal-header);
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--terminal-border);
+}
+
+.consent-title {
+  color: var(--text-primary);
+  font-family: 'VT323', monospace;
+  font-size: 1.2em;
+}
+
+.consent-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.control-dot.red { background-color: #ff5f56; }
+.control-dot.yellow { background-color: #ffbd2e; }
+.control-dot.green { background-color: #27c93f; }
+
+.consent-content {
+  padding: 20px;
+  color: var(--text-primary);
+}
+
+.consent-ascii {
+  color: var(--text-highlight);
+  font-family: 'VT323', monospace;
+  text-align: center;
+  margin-bottom: 20px;
+  white-space: pre;
+}
+
+.consent-message {
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1.6;
+}
+
+.consent-message p {
+  margin-bottom: 15px;
+}
+
+.consent-message ul {
+  list-style-type: none;
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.consent-message ul li {
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.consent-message ul li::before {
+  content: '>';
+  position: absolute;
+  left: -20px;
+  color: var(--text-highlight);
+}
+
+.consent-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.accept-button,
+.reject-button {
+  background: transparent;
+  border: 2px solid var(--terminal-border);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.accept-button:hover {
+  border-color: #27c93f;
+  color: #27c93f;
+  box-shadow: 0 0 10px rgba(39, 201, 63, 0.3);
+}
+
+.reject-button:hover {
+  border-color: #ff5f56;
+  color: #ff5f56;
+  box-shadow: 0 0 10px rgba(255, 95, 86, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Theme-specific styles */
+.consent-warning.dark .consent-terminal {
+  background-color: #1a1a1a;
+}
+
+.consent-warning.light .consent-terminal {
+  background-color: #f0f0f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .consent-terminal {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .consent-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .consent-message {
+    font-size: 0.9em;
+  }
+} 

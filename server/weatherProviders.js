@@ -8,6 +8,7 @@ class WeatherProviders {
   constructor() {
     this.providers = {
       'openweathermap': new OpenWeatherMapProvider(),
+      'openweathermap-onecall': new OpenWeatherMapOneCallProvider(),
       'tomorrow-io': new TomorrowIOProvider(),
       'weatherapi': new WeatherAPIProvider(),
       'visual-crossing': new VisualCrossingProvider(),
@@ -29,6 +30,28 @@ class WeatherProviders {
     }
 
     return provider.getWeather(lat, lon);
+  }
+
+  /**
+   * Get forecast data from the specified provider
+   * @param {string} providerName - The name of the weather provider
+   * @param {number} lat - Latitude
+   * @param {number} lon - Longitude
+   * @returns {Promise<Object>} Standardized forecast data
+   */
+  async getForecast(providerName, lat, lon) {
+    const provider = this.providers[providerName];
+    if (!provider) {
+      throw new Error(`Weather provider '${providerName}' not found`);
+    }
+
+    // Check if the provider has a getForecast method
+    if (typeof provider.getForecast === 'function') {
+      return provider.getForecast(lat, lon);
+    }
+
+    // If provider doesn't support forecast, throw an error so the fallback logic can try the next provider
+    throw new Error(`Provider ${providerName} doesn't support forecast`);
   }
 
   /**
@@ -102,7 +125,32 @@ class OpenWeatherMapProvider extends BaseWeatherProvider {
       throw new Error('OpenWeatherMap API key not configured');
     }
 
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+    // Use OpenWeatherMap API 2.5 for current weather (compatible with free tier)
+    const weatherApiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+    
+    try {
+      const weatherResponse = await fetch(weatherApiUrl);
+      
+      if (!weatherResponse.ok) {
+        throw new Error(`OpenWeatherMap API error: ${weatherResponse.status}`);
+      }
+      
+      const weatherData = await weatherResponse.json();
+      return this.transformData(weatherData);
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      throw error;
+    }
+  }
+
+  async getForecast(lat, lon) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('OpenWeatherMap API key not configured');
+    }
+
+    // Use One Call API 3.0 for hourly forecast
+    const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=current,minutely,daily&appid=${apiKey}&units=metric`;
     
     const response = await fetch(apiUrl);
     if (!response.ok) {
@@ -110,20 +158,176 @@ class OpenWeatherMapProvider extends BaseWeatherProvider {
     }
 
     const data = await response.json();
-    return this.transformData(data);
+    return this.transformForecastData(data);
   }
 
   transformData(data) {
+    // API 2.5 format: data.main, data.weather[0], data.sys, data.name
+    const main = data.main;
+    const weather = data.weather[0];
+    const sys = data.sys;
+    
     return {
-      temperature: Math.round(data.main.temp),
-      description: data.weather[0].description,
-      location: `${data.name}, ${data.sys.country}`,
-      humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
-      icon: data.weather[0].icon,
+      temperature: Math.round(main.temp),
+      description: weather.description,
+      location: `${data.name || 'Unknown'}, ${sys?.country || 'Unknown'}`,
+      humidity: main.humidity,
+      windSpeed: Math.round(data.wind?.speed * 3.6 || 0), // Convert m/s to km/h
+      icon: weather.icon,
       provider: this.name,
-      mockData: false
+      mockData: false,
+      // Note: API 2.5 doesn't provide hourly forecast or alerts
+      hasRain: weather.main === 'Rain' || weather.main === 'Drizzle',
+      hasAlerts: false,
+      alerts: [],
+      hourlyForecast: []
     };
+  }
+
+  transformForecastData(data) {
+    if (!data.hourly || data.hourly.length === 0) {
+      throw new Error('No hourly forecast data available');
+    }
+
+    return data.hourly.slice(0, 5).map(hour => ({
+      time: new Date(hour.dt * 1000).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }),
+      temperature: Math.round(hour.temp),
+      description: hour.weather[0].description,
+      icon: hour.weather[0].icon,
+      humidity: hour.humidity,
+      windSpeed: Math.round(hour.wind_speed * 3.6),
+      // Check if this hour has rain
+      hasRain: hour.weather[0].main === 'Rain' || hour.weather[0].main === 'Drizzle',
+      pop: hour.pop // Probability of precipitation
+    }));
+  }
+}
+
+/**
+ * OpenWeatherMap One Call API 3.0 Provider
+ * Requires separate subscription to "One Call by Call" plan
+ */
+class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
+  constructor() {
+    super('openweathermap-onecall', true);
+  }
+
+  getApiKey() {
+    return process.env.OPENWEATHER_API_KEY;
+  }
+
+  async getWeather(lat, lon) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('OpenWeatherMap API key not configured');
+    }
+
+    // Use One Call API 3.0 for current weather and hourly forecast
+    const weatherApiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily&appid=${apiKey}&units=metric`;
+    
+    // Get city name using reverse geocoding
+    const geocodingApiUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
+    
+    try {
+      // Make both API calls in parallel
+      const [weatherResponse, geocodingResponse] = await Promise.all([
+        fetch(weatherApiUrl),
+        fetch(geocodingApiUrl)
+      ]);
+      
+      if (!weatherResponse.ok) {
+        throw new Error(`OpenWeatherMap One Call API error: ${weatherResponse.status}`);
+      }
+      
+      const weatherData = await weatherResponse.json();
+      const geocodingData = await geocodingResponse.json();
+      
+      // Add city name to weather data
+      if (geocodingData && geocodingData.length > 0) {
+        weatherData.name = geocodingData[0].name;
+        weatherData.sys = { country: geocodingData[0].country };
+      }
+      
+      return this.transformData(weatherData);
+    } catch (error) {
+      console.error('Error fetching weather or geocoding data:', error);
+      throw error;
+    }
+  }
+
+  async getForecast(lat, lon) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('OpenWeatherMap API key not configured');
+    }
+
+    // Use One Call API 3.0 for hourly forecast
+    const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=current,minutely,daily&appid=${apiKey}&units=metric`;
+    
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`OpenWeatherMap One Call API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return this.transformForecastData(data);
+  }
+
+  transformData(data) {
+    const current = data.current;
+    const hourly = data.hourly || [];
+    
+    // Check for rain in next few hours
+    const hasRain = hourly.slice(0, 3).some(hour => 
+      hour.weather[0].main === 'Rain' || hour.weather[0].main === 'Drizzle'
+    );
+    
+    // Check for weather alerts
+    const hasAlerts = data.alerts && data.alerts.length > 0;
+    
+    return {
+      temperature: Math.round(current.temp),
+      description: current.weather[0].description,
+      location: `${data.name || 'Unknown'}, ${data.sys?.country || 'Unknown'}`,
+      humidity: current.humidity,
+      windSpeed: Math.round(current.wind_speed * 3.6), // Convert m/s to km/h
+      icon: current.weather[0].icon,
+      provider: this.name,
+      mockData: false,
+      // Enhanced features available with One Call API
+      hasRain: hasRain,
+      hasAlerts: hasAlerts,
+      alerts: data.alerts || [],
+      hourlyForecast: hourly.slice(0, 5) // First 5 hours for forecast
+    };
+  }
+
+  transformForecastData(data) {
+    const hourly = data.hourly || [];
+    const timezoneOffset = data.timezone_offset || 0; // Get timezone offset from API
+    
+    return hourly.slice(0, 5).map(hour => {
+      // Convert UTC timestamp to local time using timezone offset
+      const localTime = new Date((hour.dt + timezoneOffset) * 1000);
+      
+      return {
+        time: localTime.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          hour12: true 
+        }),
+        temperature: Math.round(hour.temp),
+        description: hour.weather[0].description,
+        icon: hour.weather[0].icon,
+        humidity: hour.humidity,
+        windSpeed: Math.round(hour.wind_speed * 3.6),
+        // Check if this hour has rain
+        hasRain: hour.weather[0].main === 'Rain' || hour.weather[0].main === 'Drizzle',
+        pop: hour.pop // Probability of precipitation
+      };
+    });
   }
 }
 
@@ -230,7 +434,7 @@ class WeatherAPIProvider extends BaseWeatherProvider {
   }
 
   getApiKey() {
-    return process.env.WEATHERAPI_KEY;
+    return process.env.WEATHERAPI_API_KEY;
   }
 
   async getWeather(lat, lon) {
@@ -250,6 +454,23 @@ class WeatherAPIProvider extends BaseWeatherProvider {
     return this.transformData(data);
   }
 
+  async getForecast(lat, lon) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      throw new Error('WeatherAPI key not configured');
+    }
+
+    const apiUrl = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=1&aqi=no`;
+    
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`WeatherAPI forecast error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return this.transformForecastData(data);
+  }
+
   transformData(data) {
     return {
       temperature: Math.round(data.current.temp_c),
@@ -261,6 +482,24 @@ class WeatherAPIProvider extends BaseWeatherProvider {
       provider: this.name,
       mockData: false
     };
+  }
+
+  transformForecastData(data) {
+    const hourly = data.forecast?.forecastday[0]?.hour || [];
+    
+    return hourly.slice(0, 5).map(hour => ({
+      time: new Date(hour.time).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        hour12: true 
+      }),
+      temperature: Math.round(hour.temp_c),
+      description: hour.condition.text,
+      icon: this.mapWeatherAPIIcon(hour.condition.code),
+      humidity: hour.humidity,
+      windSpeed: Math.round(hour.wind_kph),
+      hasRain: hour.chance_of_rain > 0,
+      pop: hour.chance_of_rain / 100 // Convert percentage to decimal
+    }));
   }
 
   mapWeatherAPIIcon(code) {
@@ -479,6 +718,50 @@ class OpenMeteoProvider extends BaseWeatherProvider {
       provider: this.name,
       mockData: false
     };
+  }
+
+  async getForecast(lat, lon) {
+    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto&forecast_hours=5`;
+    
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`Open-Meteo forecast API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return this.transformForecastData(data);
+  }
+
+  transformForecastData(data) {
+    const hourly = data.hourly;
+    const forecast = [];
+    
+    // Get the first 5 hours from the API response
+    for (let i = 0; i < 5 && i < hourly.time.length; i++) {
+      const hourData = {
+        time: this.formatHour(hourly.time[i]),
+        temperature: Math.round(hourly.temperature_2m[i]),
+        description: this.getWeatherDescription(hourly.weather_code[i]),
+        icon: this.mapOpenMeteoIcon(hourly.weather_code[i]),
+        humidity: hourly.relative_humidity_2m[i],
+        windSpeed: Math.round(hourly.wind_speed_10m[i] * 3.6) // Convert m/s to km/h
+      };
+      forecast.push(hourData);
+    }
+    
+    console.log(`Generated forecast with ${forecast.length} hours:`, forecast);
+    
+    return {
+      forecast: forecast,
+      provider: this.name,
+      location: `${data.latitude}, ${data.longitude}`,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  formatHour(timeString) {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   getWeatherDescription(code) {

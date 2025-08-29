@@ -37,15 +37,7 @@ jest.mock('../../hooks/useTheme', () => ({
 }));
 
 // Mock other services
-jest.mock('../../services/moonPhaseService', () => ({
-  __esModule: true,
-  default: {
-    getMoonPhaseEmojiForWeather: jest.fn().mockResolvedValue('🌙'),
-  },
-}));
-
-// Use jest.doMock to ensure proper mock timing
-jest.doMock('../../services/locationSimulationService', () => ({
+jest.mock('../../services/locationSimulationService', () => ({
   __esModule: true,
   default: {
     subscribe: jest.fn().mockImplementation(() => {

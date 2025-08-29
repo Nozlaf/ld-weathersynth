@@ -8,6 +8,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "highlight.run": "^9.18.23",
     "launchdarkly-react-client-sdk": "^3.8.1",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
@@ -18,22 +19,14 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "REACT_APP_BUILD_TIME=$(date +%Y%m%d_%H%M%S) react-scripts build",
     "serve": "serve -s build -l 3000",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server": "cd server && npm start",
     "server:dev": "cd server && npm run dev",
     "dev": "concurrently \"npm run server:dev\" \"npm start\"",
-    "build:all": "npm run build && cd server && npm ci --only=production",
-    "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:stop": "pm2 stop weather-synth",
-    "pm2:restart": "pm2 restart weather-synth",
-    "pm2:reload": "pm2 reload weather-synth",
-    "pm2:delete": "pm2 delete weather-synth",
-    "pm2:logs": "pm2 logs weather-synth",
-    "pm2:status": "pm2 status",
-    "pm2:prod": "pm2 start ecosystem.config.js --env production"
+        "build:all": "npm run build && cd server && npm ci --only=production"
   },
   "eslintConfig": {
     "extends": [

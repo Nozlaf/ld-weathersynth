@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { WeatherData, getCurrentWeather, WeatherAPIError } from '../services/weatherService';
+import { getCurrentWeather, WeatherAPIError, getCurrentLocation, Location } from '../services/weatherService';
 import { useTheme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
-import moonPhaseService from '../services/moonPhaseService';
-import { MoonPhaseResponse } from '../types/moonPhase';
 import locationSimulationService from '../services/locationSimulationService';
 import WeatherDebugService from '../services/weatherDebugService';
 import OptionsModal from './OptionsModal';
 import APIErrorModal from './APIErrorModal';
 import './WeatherWidget.css';
+
+interface ForecastHour {
+  time: string;
+  temperature: number;
+  description: string;
+  icon: string;
+  humidity: number;
+  windSpeed: number;
+  hasRain?: boolean;
+  pop?: number;
+}
+
+interface WeatherData {
+  temperature: number;
+  description: string;
+  location: string;
+  humidity: number;
+  windSpeed: number;
+  icon: string;
+  provider?: string;
+  mockData?: boolean;
+  hasRain?: boolean;
+  hasAlerts?: boolean;
+  alerts?: any[];
+}
 
 const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -16,44 +39,20 @@ const WeatherWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<WeatherAPIError | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [moonPhaseData, setMoonPhaseData] = useState<MoonPhaseResponse | null>(null);
-  const [showMoonTooltip, setShowMoonTooltip] = useState<boolean>(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [temperatureUnit, setTemperatureUnit] = useState<'c' | 'f' | 'k'>('c');
   const [distanceUnit, setDistanceUnit] = useState<'m' | 'i'>('m');
+  const [showWeatherTooltip, setShowWeatherTooltip] = useState<boolean>(false);
+  const [showForecast, setShowForecast] = useState<boolean>(false);
+  const [forecast, setForecast] = useState<ForecastHour[]>([]);
+  const [forecastLoading, setForecastLoading] = useState<boolean>(false);
+  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [hoveredForecastIndex, setHoveredForecastIndex] = useState<number | null>(null);
+  const [expandedAlerts, setExpandedAlerts] = useState<Set<number>>(new Set());
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
   const weatherDebug = WeatherDebugService.getInstance();
-
-  const fetchMoonPhase = async () => {
-    try {
-      const moonData = await moonPhaseService.getCurrentMoonPhase();
-      setMoonPhaseData(moonData);
-    } catch (error) {
-      console.warn('Failed to fetch moon phase:', error);
-      // Keep the default moon data if fetching fails
-      setMoonPhaseData({
-        data: {
-          Error: 1,
-          ErrorMsg: 'Failed to fetch',
-          TargetDate: Date.now().toString(),
-          Moon: ['Unknown'],
-          Index: 0,
-          Age: 0,
-          Phase: 'Unknown',
-          Distance: 0,
-          Illumination: 0.5,
-          AngularDiameter: 0,
-          DistanceToSun: 0,
-          SunAngularDiameter: 0
-        },
-        phase: 'Unknown',
-        illumination: 0.5,
-        emoji: '🌙'
-      });
-    }
-  };
 
   const fetchWeather = async () => {
     try {
@@ -61,13 +60,15 @@ const WeatherWidget: React.FC = () => {
       setLoading(true);
       setError(null);
       setApiError(null);
+      
+      // Get current location first
+      const location = await getCurrentLocation();
+      setCurrentLocation(location);
+      
       const weatherData = await getCurrentWeather(ldClient);
       console.log('🔍 DEBUG: Weather data received:', weatherData);
       setWeather(weatherData);
       setLastUpdated(new Date());
-      
-      // Fetch moon phase data for accurate nighttime display
-      await fetchMoonPhase();
     } catch (err) {
       console.error('🔍 DEBUG: fetchWeather error:', err);
       
@@ -91,6 +92,11 @@ const WeatherWidget: React.FC = () => {
           humidity: 65,
           windSpeed: 12,
           icon: '01d',
+          provider: 'demo',
+          mockData: true,
+          hasRain: false,
+          hasAlerts: false,
+          alerts: []
         };
         setWeather(fallbackData);
         setLastUpdated(new Date());
@@ -102,6 +108,51 @@ const WeatherWidget: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fetch forecast data
+  const fetchForecast = async () => {
+    if (!currentLocation || !weather) return;
+    
+    setForecastLoading(true);
+    try {
+      const response = await fetch(`/api/weather/forecast?lat=${currentLocation.lat}&lon=${currentLocation.lon}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Convert object with numeric keys to array
+        const forecastArray = Object.keys(data)
+          .filter(key => key !== 'upstreamLatency' && !isNaN(Number(key)))
+          .sort((a, b) => Number(a) - Number(b))
+          .map(key => data[key]);
+        
+        console.log('🔍 DEBUG: Forecast data received:', data);
+        console.log('🔍 DEBUG: Converted forecast array:', forecastArray);
+        
+        setForecast(forecastArray);
+      } else {
+        console.error('Failed to fetch forecast:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching forecast:', error);
+    } finally {
+      setForecastLoading(false);
+    }
+  };
+
+  // Handle weather icon click
+  const handleWeatherIconClick = () => {
+    console.log('🔍 DEBUG: Weather icon clicked!');
+    console.log('🔍 DEBUG: Current showForecast state:', showForecast);
+    console.log('🔍 DEBUG: Current weather data:', weather);
+    
+    if (!showForecast) {
+      console.log('🔍 DEBUG: Fetching forecast...');
+      fetchForecast();
+    }
+    setShowForecast(!showForecast);
+    setShowWeatherTooltip(false); // Hide tooltip when showing forecast
+    console.log('🔍 DEBUG: New showForecast state will be:', !showForecast);
   };
 
   const handleOptionsClick = () => {
@@ -116,10 +167,21 @@ const WeatherWidget: React.FC = () => {
     setApiError(null);
   };
 
+  const toggleAlertExpansion = (alertIndex: number) => {
+    setExpandedAlerts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(alertIndex)) {
+        newSet.delete(alertIndex);
+      } else {
+        newSet.add(alertIndex);
+      }
+      return newSet;
+    });
+  };
+
   // Get LaunchDarkly flags - Following Rule 1: Centralized evaluation with predictable fallback
   const enableAnimations = ldClient ? ldClient.variation('enable-animations', true) : true;
   const showExtraWeatherInfo = ldClient ? ldClient.variation('show-extra-weather-info', true) : true;
-  const showMoonPhase = ldClient ? ldClient.variation('show-moon-phase', true) : true;
 
   useEffect(() => {
     console.log('🔍 DEBUG: WeatherWidget useEffect setting up');
@@ -341,9 +403,6 @@ SYSTEM ERROR: ${error}
 `}
               </pre>
               <div className="button-group">
-                <button className="refresh-button" onClick={fetchWeather}>
-                  [ RETRY ]
-                </button>
                 <button className="refresh-button" onClick={handleOptionsClick}>
                   [ OPTIONS ]
                 </button>
@@ -371,8 +430,168 @@ SYSTEM ERROR: ${error}
         <div className="terminal-content">
           <div className="weather-display">
             <div className="weather-header">
-              <div className="weather-icon">{getWeatherIcon(weather.icon)}</div>
-              <div className="weather-temp">{formatTemperature(weather.temperature)}</div>
+              {!showForecast ? (
+                // Current weather display
+                <>
+                  <div 
+                    className="weather-icon"
+                    title={weather.description}
+                    onMouseEnter={() => setShowWeatherTooltip(true)}
+                    onMouseLeave={() => setShowWeatherTooltip(false)}
+                    onClick={handleWeatherIconClick}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {getWeatherIcon(weather.icon)}
+                    {/* Rain indicator - only show for OpenWeather providers */}
+                    {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && weather.hasRain && (
+                      <div className="weather-indicator rain-indicator" title="Rain expected">
+                        💧
+                      </div>
+                    )}
+                    {/* Alert indicator - only show for OpenWeather providers */}
+                    {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && weather.hasAlerts && (
+                      <div className="weather-indicator alert-indicator" title="Weather alert active">
+                        ⚠️
+                      </div>
+                    )}
+                  </div>
+                  {showWeatherTooltip && (
+                    <div className="weather-tooltip">
+                      <div className="weather-tooltip-content">
+                        <strong>{weather.description}</strong>
+                        <div className="weather-tooltip-details">
+                          <small>Temperature: {formatTemperature(weather.temperature)}</small>
+                          <small>Humidity: {weather.humidity}%</small>
+                          <small>Wind: {formatWindSpeed(weather.windSpeed)}</small>
+                          {/* Show rain probability if available */}
+                          {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && weather.hasRain && (
+                            <small>🌧️ Rain expected</small>
+                          )}
+                          {/* Show alert info if available */}
+                          {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && weather.hasAlerts && weather.alerts && weather.alerts.length > 0 && (
+                            <small>⚠️ {weather.alerts[0].event}</small>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="weather-temp">{formatTemperature(weather.temperature)}</div>
+                </>
+              ) : (
+                // Forecast display
+                <>
+                  <div className="forecast-container">
+                    <div className="forecast-header">
+                      <span className="forecast-title">5-Hour Forecast</span>
+                      <button 
+                        className="forecast-close"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowForecast(false);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="forecast-grid">
+                      {forecastLoading ? (
+                        <div className="forecast-loading">Loading forecast...</div>
+                      ) : forecast.length > 0 ? (
+                        forecast.map((hour, index) => (
+                          <div 
+                            key={index} 
+                            className="forecast-square"
+                          >
+                            <div className="forecast-time">{hour.time}</div>
+                            <div className="forecast-icon">
+                              {getWeatherIcon(hour.icon)}
+                              {/* Rain indicator for forecast hours */}
+                              {hour.hasRain && (
+                                <div className="forecast-rain-indicator" title={`${Math.round((hour.pop || 0) * 100)}% chance of rain`}>
+                                  💧
+                                </div>
+                              )}
+                            </div>
+                            <div className="forecast-temp">{formatTemperature(hour.temperature)}</div>
+                            
+                            {/* Forecast tooltip - temporarily disabled to fix display issues */}
+                            {/* {hoveredForecastIndex === index && (
+                              <div className="forecast-tooltip">
+                                <div className="forecast-tooltip-content">
+                                  <div className="forecast-tooltip-time">{hour.time}</div>
+                                  <div className="forecast-tooltip-description">{hour.description}</div>
+                                  <div className="forecast-tooltip-details">
+                                    <div className="forecast-tooltip-detail">
+                                      <span className="detail-label">Temperature:</span>
+                                      <span className="detail-value">{formatTemperature(hour.temperature)}</span>
+                                    </div>
+                                    <div className="forecast-tooltip-detail">
+                                      <span className="detail-label">Humidity:</span>
+                                      <span className="detail-value">{hour.humidity}%</span>
+                                    </div>
+                                    <div className="forecast-tooltip-detail">
+                                      <span className="detail-label">Wind:</span>
+                                      <span className="detail-value">{formatWindSpeed(hour.windSpeed)}</span>
+                                    </div>
+                                    {hour.hasRain && hour.pop && (
+                                      <div className="forecast-tooltip-detail">
+                                        <span className="detail-label">Rain Chance:</span>
+                                        <span className="detail-value">{Math.round(hour.pop * 100)}%</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )} */}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="forecast-error">No forecast data available</div>
+                      )}
+                    </div>
+                    
+                    {/* Weather Alerts Section */}
+                    {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && 
+                     weather.hasAlerts && 
+                     weather.alerts && 
+                     weather.alerts.length > 0 && (
+                      <div className="forecast-alerts">
+                        <div className="forecast-alerts-header">
+                          <span className="forecast-alerts-title">⚠️ WEATHER ALERTS</span>
+                        </div>
+                        <div className="forecast-alerts-content">
+                          {weather.alerts.map((alert: any, alertIndex: number) => (
+                            <div key={alertIndex} className="forecast-alert-item">
+                              <div 
+                                className="forecast-alert-header"
+                                onClick={() => toggleAlertExpansion(alertIndex)}
+                              >
+                                <div className="forecast-alert-event">{alert.event}</div>
+                                {alert.start && alert.end && (
+                                  <div className="forecast-alert-time">
+                                    <span className="alert-time-label">Active:</span>
+                                    <span className="alert-time-value">
+                                      {new Date(alert.start * 1000).toLocaleDateString()} {new Date(alert.start * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(alert.end * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="forecast-alert-toggle">
+                                  {expandedAlerts.has(alertIndex) ? '▼' : '▶'}
+                                </div>
+                              </div>
+                              {expandedAlerts.has(alertIndex) && (
+                                <div className="forecast-alert-description">
+                                  {alert.description}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             
             <div className="weather-info">
@@ -390,33 +609,6 @@ SYSTEM ERROR: ${error}
                   <span className="detail-label">WIND:</span>
                   <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
                 </div>
-                {showMoonPhase && moonPhaseData && (
-                  <div className="detail-row">
-                    <span className="detail-label">MOON PHASE:</span>
-                    <span className="detail-value moon-phase-detail">
-                      <span 
-                        className="moon-phase-icon"
-                        title={moonPhaseData.phase}
-                        onMouseEnter={() => setShowMoonTooltip(true)}
-                        onMouseLeave={() => setShowMoonTooltip(false)}
-                        onClick={() => setShowMoonTooltip(!showMoonTooltip)}
-                        style={{ cursor: 'help', position: 'relative' }}
-                      >
-                        {moonPhaseData.emoji}
-                        {showMoonTooltip && (
-                          <div className="moon-tooltip">
-                            <div className="moon-tooltip-content">
-                              <strong>{moonPhaseData.phase}</strong>
-                              <div className="moon-tooltip-details">
-                                <small>Illumination: {Math.round(moonPhaseData.illumination * 100)}%</small>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </span>
-                    </span>
-                  </div>
-                )}
               </div>
             )}
 
@@ -425,9 +617,6 @@ SYSTEM ERROR: ${error}
                 LAST UPDATE: {lastUpdated && formatTime(lastUpdated)}
               </div>
               <div className="button-group">
-                <button className="refresh-button" onClick={fetchWeather}>
-                  [ REFRESH ]
-                </button>
                 <button className="refresh-button" onClick={handleOptionsClick}>
                   [ OPTIONS ]
                 </button>

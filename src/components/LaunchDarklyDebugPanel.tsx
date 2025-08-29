@@ -209,6 +209,31 @@ const LaunchDarklyDebugPanel: React.FC<DebugPanelProps> = ({ isVisible, onClose 
         </div>
         
         <div className="debug-content">
+          {/* Build Information */}
+          <div className="debug-section">
+            <h3>🏗️ BUILD INFO</h3>
+            <div className="debug-info">
+              <div className="info-row">
+                <span className="info-label">VERSION:</span>
+                <span className="info-value" style={{ fontWeight: 'bold', color: '#00ff00' }}>
+                  {context?.custom?.buildVersion || '1.2.0'}
+                </span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">BUILD TIME:</span>
+                <span className="info-value" style={{ fontWeight: 'bold', color: '#00ffff' }}>
+                  {context?.custom?.buildTime || 'unknown'}
+                </span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">ENVIRONMENT:</span>
+                <span className="info-value">
+                  {context?.custom?.environment || 'development'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* SDK Status */}
           <div className="debug-section">
             <h3>📡 SDK STATUS</h3>

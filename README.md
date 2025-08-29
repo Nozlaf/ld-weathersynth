@@ -777,6 +777,29 @@ services:
 4. Set port mapping to `3000:80`
 5. Start the container
 
+#### QNAP Custom App Template (Recommended)
+
+For easier deployment and management, you can create a custom app template:
+
+1. **Build the QNAP image:**
+   ```bash
+   ./build-qnap.sh
+   ```
+
+2. **Set up the custom template:**
+   ```bash
+   ./setup-qnap-template.sh
+   ```
+
+3. **Follow the setup guide:**
+   See [QNAP_CUSTOM_TEMPLATE_GUIDE.md](QNAP_CUSTOM_TEMPLATE_GUIDE.md) for detailed instructions
+
+The custom template provides:
+- Pre-configured environment variables
+- Resource limits and health checks
+- Easy deployment from Container Station GUI
+- Automatic restart policies
+
 #### Runtime Environment Variables
 
 The Docker container supports runtime environment variable injection, allowing you to configure the app without rebuilding the image. See [DOCKER_ENVIRONMENT_VARIABLES.md](DOCKER_ENVIRONMENT_VARIABLES.md) for complete documentation.

@@ -5,6 +5,7 @@ declare const process: {
   env: {
     REACT_APP_LAUNCHDARKLY_CLIENT_ID?: string;
     REACT_APP_VERSION?: string;
+    REACT_APP_BUILD_TIME?: string;
     NODE_ENV?: string;
     [key: string]: string | undefined;
   };
@@ -72,6 +73,7 @@ export const createLDContext = (userId?: string, locationContext?: LocationConte
     // Following Rule 3: Include build version and session attributes
     custom: {
       buildVersion: process.env.REACT_APP_VERSION || '1.0.0',
+      buildTime: process.env.REACT_APP_BUILD_TIME || 'unknown',
       sessionId: sessionStorage.getItem('sessionId') || Math.random().toString(36),
       environment: process.env.NODE_ENV || 'development',
       // Always include night_time, default to false if not determined

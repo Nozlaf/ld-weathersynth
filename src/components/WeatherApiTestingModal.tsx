@@ -221,8 +221,8 @@ const WeatherApiTestingModal: React.FC<WeatherApiTestingModalProps> = ({
                   </div>
                   <div style={{ 
                     display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
-                    gap: '10px', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                    gap: '15px', 
                     marginTop: '12px' 
                   }}>
                     {weatherDebugInfo.weatherProviders.all.map(provider => {
@@ -236,17 +236,19 @@ const WeatherApiTestingModal: React.FC<WeatherApiTestingModalProps> = ({
                           onClick={() => testWeatherProvider(provider)}
                           disabled={isTesting || testingAllProviders}
                           style={{
-                            fontSize: '0.75rem',
-                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            padding: '10px 16px',
                             backgroundColor: 'transparent',
                             border: `2px solid ${isAvailable ? '#00ff00' : '#ff4444'}`,
                             color: isAvailable ? '#00ff00' : '#ff4444',
                             borderRadius: '6px',
                             cursor: 'pointer',
-                            minHeight: '40px',
+                            minHeight: '45px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            whiteSpace: 'nowrap',
+                            minWidth: '180px'
                           }}
                         >
                           {isTesting ? '🔄 TESTING...' : `${provider.toUpperCase()}`}

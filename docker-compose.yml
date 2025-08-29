@@ -24,6 +24,28 @@ services:
       - "traefik.http.routers.weather-synth.rule=Host(`weather-synth.local`)"
       - "traefik.http.services.weather-synth.loadbalancer.server.port=80"
 
+  # Local development service
+  weather-synth-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5050:80"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - LAUNCHDARKLY_SDK_KEY=${LAUNCHDARKLY_SDK_KEY}
+      - REACT_APP_LAUNCHDARKLY_CLIENT_ID=${REACT_APP_LAUNCHDARKLY_CLIENT_ID}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - VISUAL_CROSSING_API_KEY=${VISUAL_CROSSING_API_KEY}
+      - REACT_APP_GA_MEASUREMENT_ID=${REACT_APP_GA_MEASUREMENT_ID}
+      - REACT_APP_WEATHERAPI_API_KEY=${REACT_APP_WEATHERAPI_API_KEY}
+      - REACT_APP_TOMORROWIO_API_KEY=${REACT_APP_TOMORROWIO_API_KEY}
+      - WEATHERAPI_API_KEY=${WEATHERAPI_API_KEY}
+    restart: unless-stopped
+    profiles:
+      - local
+
   # Development service (optional)
   weather-synth-dev:
     build:

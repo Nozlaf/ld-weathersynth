@@ -192,7 +192,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="tech-item">
                   <span className="tech-label">Infrastructure:</span>
-                  <span className="tech-value">Terraform + PM2</span>
+                  <span className="tech-value">Terraform + Docker</span>
                 </div>
                 <div className="tech-item">
                   <span className="tech-label">Development:</span>

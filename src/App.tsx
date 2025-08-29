@@ -2,207 +2,167 @@ import React, { useState, useEffect, useRef } from 'react';
 import { withLDProvider, useLDClient } from 'launchdarkly-react-client-sdk';
 import Observability from '@launchdarkly/observability';
 import SessionReplay from '@launchdarkly/session-replay';
-import { ThemeProvider } from './providers/ThemeProvider';
+import type { RecordOptions } from 'highlight.run';
 import WeatherWidget from './components/WeatherWidget';
-import LaunchDarklyDebugPanel from './components/LaunchDarklyDebugPanel';
-import QRCodeDisplay from './components/QRCodeDisplay';
 import ErrorBoundary from './components/ErrorBoundary';
-import { getSDKKey, createLDContext } from './services/launchDarklyConfig';
-import { initializeGA, trackPageView } from './utils/analytics';
-import DebugService from './services/debugService';
+import ConsentWarning from './components/ConsentWarning';
+import LaunchDarklyDebugPanel from './components/LaunchDarklyDebugPanel';
+import { ThemeProvider } from './providers/ThemeProvider';
 import './App.css';
 
-// Create session replay instance we can reference later
-const sessionReplayInstance = new SessionReplay({
-  privacySetting: 'none',
-  enableCanvasRecording: true,
-  samplingStrategy: {
-    canvasManualSnapshot: 2,
-    canvasMaxSnapshotDimension: 480,
-  },
-});
-
-// Make session replay instance available globally for debug panel
 declare global {
   interface Window {
+    showDebugPanel?: () => void;
+    hideDebugPanel?: () => void;
+    LDRecord?: {
+      getRecordingState: () => string;
+    };
     ldSessionReplay?: any;
-    ldClient?: any;
   }
 }
 
-window.ldSessionReplay = sessionReplayInstance;
-
-const App: React.FC = () => {
-  const ldClient = useLDClient();
+// Inner component that can use LaunchDarkly hooks
+const AppContent: React.FC = () => {
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tapCount, setTapCount] = useState(0);
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastTapTimeRef = useRef<number>(0);
-  const debugService = DebugService.getInstance();
+  const ldClient = useLDClient();
 
-  // Initialize debug service with LaunchDarkly client and make ldClient available globally
+  // Handle keyboard shortcut
   useEffect(() => {
-    if (ldClient) {
-      window.ldClient = ldClient;
-      debugService.setLDClient(ldClient);
-    }
-  }, [ldClient, debugService]);
-
-  // Initialize Google Analytics
-  useEffect(() => {
-    initializeGA();
-    trackPageView(window.location.pathname);
-  }, []);
-
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        setShowDebugPanel(prev => !prev);
-      }
-      // Also allow Escape to close the panel
-      if (event.key === 'Escape' && showDebugPanel) {
-        setShowDebugPanel(false);
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowDebugPanel(!showDebugPanel);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [showDebugPanel]);
 
-  // Handle tap detection for mobile secret menu
-  const handleTap = (event: React.MouseEvent | React.TouchEvent) => {
-    const target = event.target as HTMLElement | null;
-    
-    // Return early if no target
-    if (!target) return;
-    
-    // Check if tap is on any modal/menu content - exclude these taps
-    const isOnModalContent = (element: HTMLElement): boolean => {
-      // Check if element or any parent has these classes
-      const excludedClasses = [
-        'terminal-frame',      // The actual weather content box
-        'terminal-content',    // Weather content inside the frame
-        'debug-overlay',       // Debug panel overlay
-        'debug-panel',         // Debug panel content
-        'qr-code-display',     // QR code display
-        'qr-code-container',   // QR code container
-        'options-modal-backdrop', // Options modal backdrop
-        'options-modal'        // Options modal content
-      ];
-      
-      let current: HTMLElement | null = element;
-      while (current && current !== document.body) {
-        if (excludedClasses.some(className => current!.classList.contains(className))) {
-          return true;
-        }
-        current = current.parentElement;
-      }
-      return false;
-    };
-    
-    // Only count taps in empty space (not on any modal/menu content)
-    if (isOnModalContent(target)) {
-      debugService.log('🔍 DEBUG: Tap ignored - clicked on modal/menu content');
-      return;
-    }
-    
+  // Handle tap detection
+  const handleTap = () => {
     const now = Date.now();
     const timeSinceLastTap = now - lastTapTimeRef.current;
-    
-    // Reset tap count if more than 2 seconds between taps
-    if (timeSinceLastTap > 2000) {
+
+    if (timeSinceLastTap > 500) {
       setTapCount(1);
     } else {
-      setTapCount(prevCount => {
-        const newCount = prevCount + 1;
-        debugService.log(`🔍 DEBUG: Tap count: ${newCount}/10`);
-        
-        // Open debug panel after 10 taps (you can change this number)
-        if (newCount >= 10) {
-          setShowDebugPanel(true);
-          return 0; // Reset count
-        }
-        
-        return newCount;
-      });
+      setTapCount(prev => prev + 1);
     }
-    
+
     lastTapTimeRef.current = now;
-    
-    // Clear any existing timeout
+
     if (tapTimeoutRef.current) {
       clearTimeout(tapTimeoutRef.current);
     }
-    
-    // Reset tap count after 3 seconds of inactivity
+
     tapTimeoutRef.current = setTimeout(() => {
       setTapCount(0);
-    }, 3000);
+    }, 500);
+
+    if (tapCount + 1 >= 10) {
+      setShowDebugPanel(true);
+      setTapCount(0);
+    }
   };
 
-  // Cleanup timeout on unmount
+  // Expose debug panel controls globally
   useEffect(() => {
-    return () => {
-      if (tapTimeoutRef.current) {
-        clearTimeout(tapTimeoutRef.current);
-      }
-    };
+    window.showDebugPanel = () => setShowDebugPanel(true);
+    window.hideDebugPanel = () => setShowDebugPanel(false);
   }, []);
 
+  // Expose session replay status
+  useEffect(() => {
+    // Check status after a short delay to allow initialization
+    const checkSessionReplay = () => {
+      const replay = window.ldSessionReplay;
+      if (replay && typeof replay.getStatus === 'function') {
+        console.log('Session Replay Status:', replay.getStatus());
+        if (typeof replay.getSessionUrl === 'function') {
+          try {
+            const sessionUrl = replay.getSessionUrl();
+            console.log('Session Replay URL:', sessionUrl);
+          } catch (error) {
+            console.log('Session URL not available yet');
+          }
+        }
+      } else {
+        console.log('Session Replay not initialized');
+      }
+    };
+
+    // Try a few times with increasing delays
+    setTimeout(checkSessionReplay, 1000);
+    setTimeout(checkSessionReplay, 2000);
+    setTimeout(checkSessionReplay, 5000);
+  }, []);
+
+  const handleConsentAccept = () => {
+    console.log('User accepted LaunchDarkly data collection');
+  };
+
+  const handleConsentReject = () => {
+    window.location.href = 'https://launchdarkly.com';
+  };
+
+  // Check if we should show the consent warning based on the warnusers feature flag
+  const shouldShowConsentWarning = ldClient ? ldClient.variation('warnusers', true) : true;
+
   return (
-    <ErrorBoundary>
-      <div className="App">
-        <ThemeProvider>
-          <div 
-            onClick={(e) => handleTap(e)}
-            onTouchEnd={(e) => handleTap(e)}
-            style={{ 
-              cursor: 'default',
-              WebkitTapHighlightColor: 'transparent' // Prevent blue highlight on mobile
-            }}
-          >
-            <WeatherWidget />
-          </div>
-          <QRCodeDisplay />
-          <LaunchDarklyDebugPanel 
-            isVisible={showDebugPanel}
-            onClose={() => setShowDebugPanel(false)}
-          />
-        </ThemeProvider>
-      </div>
-    </ErrorBoundary>
+    <ThemeProvider>
+      <ErrorBoundary>
+        <div onClick={handleTap} style={{ minHeight: '100vh' }}>
+          {shouldShowConsentWarning && (
+            <ConsentWarning
+              onAccept={handleConsentAccept}
+              onReject={handleConsentReject}
+            />
+          )}
+          <WeatherWidget />
+          {showDebugPanel && (
+            <LaunchDarklyDebugPanel isVisible={showDebugPanel} onClose={() => setShowDebugPanel(false)} />
+          )}
+        </div>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 };
 
-// Following LaunchDarkly Cursor Rules: Initialize with proper context
-const LaunchDarklyApp = withLDProvider({
-  clientSideID: getSDKKey(),
-  context: createLDContext(),
-  timeout: 5, // Following Rule 3: Add timeout for initialization
+// Wrapper component for withLDProvider
+const App: React.FC = () => {
+  return <AppContent />;
+};
+
+export default withLDProvider({
+  clientSideID: process.env.REACT_APP_LAUNCHDARKLY_CLIENT_ID || 'your-client-id',
+  context: {
+    kind: 'user',
+    key: 'anonymous',
+    name: 'Anonymous User',
+    custom: {
+      isAnonymous: true
+    }
+  },
   options: {
     bootstrap: 'localStorage',
-    // Following Rule 2: Environment-aware configuration
-    // Only set URLs if environment variables exist (omit if undefined)
-    ...(process.env.REACT_APP_LD_BASE_URL && { baseUrl: process.env.REACT_APP_LD_BASE_URL }),
-    ...(process.env.REACT_APP_LD_STREAM_URL && { streamUrl: process.env.REACT_APP_LD_STREAM_URL }),
-    ...(process.env.REACT_APP_LD_EVENTS_URL && { eventsUrl: process.env.REACT_APP_LD_EVENTS_URL }),
-    // Plugins directly in options as per documentation
     plugins: [
-      new Observability({
+      new Observability(),
+      new SessionReplay({
         networkRecording: {
           enabled: true,
-          recordHeadersAndBody: true
-        }
-      }),
-      sessionReplayInstance
-    ],
+          recordHeadersAndBody: true,
+          urlBlocklist: [],
+          urlAllowlist: [window.location.origin]
+        },
+        maskTextContent: true,
+        maskInputs: true,
+        blockClass: 'private',
+        blockSelector: '[data-private]'
+      } as RecordOptions)
+    ]
   }
 })(App);
-
-export default LaunchDarklyApp;
