@@ -51,13 +51,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: frontend-build
     ports:
-      - "3001:3000"
+      - "3001:80"
     environment:
       - NODE_ENV=development
+      - PORT=3001
+      - LAUNCHDARKLY_SDK_KEY=${LAUNCHDARKLY_SDK_KEY}
+      - REACT_APP_LAUNCHDARKLY_CLIENT_ID=${REACT_APP_LAUNCHDARKLY_CLIENT_ID}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - VISUAL_CROSSING_API_KEY=${VISUAL_CROSSING_API_KEY}
+      - REACT_APP_GA_MEASUREMENT_ID=${REACT_APP_GA_MEASUREMENT_ID}
+      - REACT_APP_WEATHERAPI_API_KEY=${REACT_APP_WEATHERAPI_API_KEY}
+      - REACT_APP_TOMORROWIO_API_KEY=${REACT_APP_TOMORROWIO_API_KEY}
+      - WEATHERAPI_API_KEY=${WEATHERAPI_API_KEY}
     profiles:
       - dev
-    volumes:
-      - ./src:/app/src:ro
-      - ./public:/app/public:ro 
+    restart: unless-stopped 

@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fetch = require('node-fetch');
-const LaunchDarkly = require('launchdarkly-node-server-sdk');
+const LaunchDarkly = require('@launchdarkly/node-server-sdk');
 const WeatherProviders = require('./weatherProviders');
 require('dotenv').config();
 
