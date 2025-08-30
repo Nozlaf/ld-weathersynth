@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getCurrentWeather, WeatherAPIError, getCurrentLocation, Location } from '../services/weatherService';
 import { useTheme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import locationSimulationService from '../services/locationSimulationService';
 import WeatherDebugService from '../services/weatherDebugService';
+import MoonPhaseService from '../services/moonPhaseService';
 import OptionsModal from './OptionsModal';
 import APIErrorModal from './APIErrorModal';
 import './WeatherWidget.css';
@@ -49,10 +51,13 @@ const WeatherWidget: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [hoveredForecastIndex, setHoveredForecastIndex] = useState<number | null>(null);
   const [expandedAlerts, setExpandedAlerts] = useState<Set<number>>(new Set());
+  const [moonPhase, setMoonPhase] = useState<any>(null);
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
+  const { getShowMoonPhase } = useFeatureFlags();
   const weatherDebug = WeatherDebugService.getInstance();
+  const moonPhaseService = MoonPhaseService.getInstance();
 
   const fetchWeather = async () => {
     try {
@@ -69,6 +74,10 @@ const WeatherWidget: React.FC = () => {
       console.log('🔍 DEBUG: Weather data received:', weatherData);
       setWeather(weatherData);
       setLastUpdated(new Date());
+      
+      // Calculate moon phase
+      const currentMoonPhase = moonPhaseService.getCurrentMoonPhase();
+      setMoonPhase(currentMoonPhase);
     } catch (err) {
       console.error('🔍 DEBUG: fetchWeather error:', err);
       
@@ -100,6 +109,10 @@ const WeatherWidget: React.FC = () => {
         };
         setWeather(fallbackData);
         setLastUpdated(new Date());
+        
+        // Calculate moon phase for demo data
+        const demoMoonPhase = moonPhaseService.getCurrentMoonPhase();
+        setMoonPhase(demoMoonPhase);
       } else {
         // Handle generic errors
         setError('Failed to fetch weather data');
@@ -303,9 +316,9 @@ const WeatherWidget: React.FC = () => {
   }, [ldClient]);
 
   const getWeatherIcon = (iconCode: string) => {
-    // Retro-style weather icons using Unicode
-    const iconMap: { [key: string]: string } = {
-      '01d': '☀️', '01n': '🌌', // Clear night sky for clear nights (moon phase shown separately)
+    // Get the base weather icon
+    const baseIconMap: { [key: string]: string } = {
+      '01d': '☀️', '01n': '🌙', // Clear night - just moon
       '02d': '⛅', '02n': '☁️',
       '03d': '☁️', '03n': '☁️',
       '04d': '☁️', '04n': '☁️',
@@ -315,7 +328,8 @@ const WeatherWidget: React.FC = () => {
       '13d': '❄️', '13n': '❄️',
       '50d': '🌫️', '50n': '🌫️',
     };
-    return iconMap[iconCode] || '🌡️';
+    
+    return baseIconMap[iconCode] || '🌡️';
   };
 
   const formatTime = (date: Date) => {
@@ -434,14 +448,21 @@ SYSTEM ERROR: ${error}
                 // Current weather display
                 <>
                   <div 
-                    className="weather-icon"
+                    className={weather.icon.endsWith('n') ? "weather-icon weather-icon-night" : "weather-icon"}
                     title={weather.description}
                     onMouseEnter={() => setShowWeatherTooltip(true)}
                     onMouseLeave={() => setShowWeatherTooltip(false)}
                     onClick={handleWeatherIconClick}
                     style={{ cursor: 'pointer' }}
                   >
-                    {getWeatherIcon(weather.icon)}
+                    {weather.icon.endsWith('n') && moonPhase && weather.icon !== '01n' ? (
+                      <>
+                        <span className="moon-phase">{moonPhase.icon}</span>
+                        <span className="weather-overlay">{getWeatherIcon(weather.icon)}</span>
+                      </>
+                    ) : (
+                      getWeatherIcon(weather.icon)
+                    )}
                     {/* Rain indicator - only show for OpenWeather providers */}
                     {(weather.provider === 'openweathermap' || weather.provider === 'openweathermap-onecall') && weather.hasRain && (
                       <div className="weather-indicator rain-indicator" title="Rain expected">
@@ -503,8 +524,15 @@ SYSTEM ERROR: ${error}
                             className="forecast-square"
                           >
                             <div className="forecast-time">{hour.time}</div>
-                            <div className="forecast-icon">
-                              {getWeatherIcon(hour.icon)}
+                            <div className={hour.icon.endsWith('n') ? "forecast-icon weather-icon-night" : "forecast-icon"}>
+                              {hour.icon.endsWith('n') && moonPhase && hour.icon !== '01n' ? (
+                                <>
+                                  <span className="moon-phase">{moonPhase.icon}</span>
+                                  <span className="weather-overlay">{getWeatherIcon(hour.icon)}</span>
+                                </>
+                              ) : (
+                                getWeatherIcon(hour.icon)
+                              )}
                               {/* Rain indicator for forecast hours */}
                               {hour.hasRain && (
                                 <div className="forecast-rain-indicator" title={`${Math.round((hour.pop || 0) * 100)}% chance of rain`}>
@@ -608,6 +636,19 @@ SYSTEM ERROR: ${error}
                 <div className="detail-row">
                   <span className="detail-label">WIND:</span>
                   <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Moon Phase Display */}
+            {moonPhase && getShowMoonPhase() && (
+              <div className="moon-phase-section">
+                <div className="moon-phase-icon" title={moonPhase.description}>
+                  {moonPhase.icon}
+                </div>
+                <div className="moon-phase-detail">
+                  <span className="moon-phase-label">MOON:</span>
+                  <span className="moon-phase-value">{moonPhase.description}</span>
                 </div>
               </div>
             )}
