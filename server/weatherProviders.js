@@ -288,6 +288,34 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
     // Check for weather alerts
     const hasAlerts = data.alerts && data.alerts.length > 0;
     
+    // Process air quality data (One Call API includes this)
+    let airQuality = null;
+    if (data.current && data.current.air_quality) {
+      const aq = data.current.air_quality;
+      airQuality = {
+        index: aq['us-epa-index'],
+        category: this.getAQICategory(aq['us-epa-index']),
+        pollutants: {
+          pm25: aq.pm2_5,
+          pm10: aq.pm10,
+          o3: aq.o3,
+          no2: aq.no2,
+          so2: aq.so2,
+          co: aq.co
+        }
+      };
+    }
+    
+    // Process UV index data (One Call API includes this)
+    let uvIndex = null;
+    if (data.current && data.current.uvi !== undefined) {
+      uvIndex = {
+        value: data.current.uvi,
+        risk: this.getUVRisk(data.current.uvi),
+        protection: this.getUVProtection(data.current.uvi)
+      };
+    }
+    
     return {
       temperature: Math.round(current.temp),
       description: current.weather[0].description,
@@ -301,8 +329,36 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
       hasRain: hasRain,
       hasAlerts: hasAlerts,
       alerts: data.alerts || [],
-      hourlyForecast: hourly.slice(0, 5) // First 5 hours for forecast
+      hourlyForecast: hourly.slice(0, 5), // First 5 hours for forecast
+      // Enhanced data
+      airQuality,
+      uvIndex
     };
+  }
+
+  getAQICategory(aqi) {
+    if (aqi <= 50) return 'Good';
+    if (aqi <= 100) return 'Moderate';
+    if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
+    if (aqi <= 200) return 'Unhealthy';
+    if (aqi <= 300) return 'Very Unhealthy';
+    return 'Hazardous';
+  }
+
+  getUVRisk(uvValue) {
+    if (uvValue <= 2) return 'Low';
+    if (uvValue <= 5) return 'Moderate';
+    if (uvValue <= 7) return 'High';
+    if (uvValue <= 10) return 'Very High';
+    return 'Extreme';
+  }
+
+  getUVProtection(uvValue) {
+    if (uvValue <= 2) return ['No protection required', 'You can safely stay outside'];
+    if (uvValue <= 5) return ['Seek shade during midday hours', 'Slip on a shirt, slop on sunscreen', 'Slap on a hat'];
+    if (uvValue <= 7) return ['Reduce time in the sun between 10 a.m. and 4 p.m.', 'Wear protective clothing', 'Apply sunscreen SPF 30+'];
+    if (uvValue <= 10) return ['Minimize sun exposure during midday hours', 'Wear protective clothing', 'Apply sunscreen SPF 30+', 'Seek shade'];
+    return ['Avoid sun exposure during midday hours', 'Take all precautions', 'Unprotected skin will burn quickly'];
   }
 
   transformForecastData(data) {

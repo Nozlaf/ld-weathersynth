@@ -9,6 +9,34 @@ export interface WeatherData {
   humidity: number;
   windSpeed: number;
   icon: string;
+  provider?: string;
+  mockData?: boolean;
+  hasRain?: boolean;
+  hasAlerts?: boolean;
+  alerts?: any[];
+  hourlyForecast?: any[];
+  // Enhanced data
+  airQuality?: AirQualityData;
+  uvIndex?: UVIndexData;
+}
+
+export interface AirQualityData {
+  index: number;
+  category: string;
+  pollutants: {
+    pm25: number;
+    pm10: number;
+    o3: number;
+    no2: number;
+    so2: number;
+    co: number;
+  };
+}
+
+export interface UVIndexData {
+  value: number;
+  risk: string;
+  protection: string[];
 }
 
 export interface WeatherAPIError {

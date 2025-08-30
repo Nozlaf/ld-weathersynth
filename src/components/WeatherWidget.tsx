@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCurrentWeather, WeatherAPIError, getCurrentLocation, Location } from '../services/weatherService';
+import { getCurrentWeather, WeatherAPIError, getCurrentLocation, Location, WeatherData, AirQualityData, UVIndexData } from '../services/weatherService';
 import { useTheme } from '../hooks/useTheme';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
@@ -8,6 +8,8 @@ import WeatherDebugService from '../services/weatherDebugService';
 import MoonPhaseService from '../services/moonPhaseService';
 import OptionsModal from './OptionsModal';
 import APIErrorModal from './APIErrorModal';
+import AirQualityModal from './AirQualityModal';
+import UVIndexModal from './UVIndexModal';
 import './WeatherWidget.css';
 
 interface ForecastHour {
@@ -19,20 +21,6 @@ interface ForecastHour {
   windSpeed: number;
   hasRain?: boolean;
   pop?: number;
-}
-
-interface WeatherData {
-  temperature: number;
-  description: string;
-  location: string;
-  humidity: number;
-  windSpeed: number;
-  icon: string;
-  provider?: string;
-  mockData?: boolean;
-  hasRain?: boolean;
-  hasAlerts?: boolean;
-  alerts?: any[];
 }
 
 const WeatherWidget: React.FC = () => {
@@ -52,6 +40,8 @@ const WeatherWidget: React.FC = () => {
   const [hoveredForecastIndex, setHoveredForecastIndex] = useState<number | null>(null);
   const [expandedAlerts, setExpandedAlerts] = useState<Set<number>>(new Set());
   const [moonPhase, setMoonPhase] = useState<any>(null);
+  const [isAirQualityOpen, setIsAirQualityOpen] = useState(false);
+  const [isUVIndexOpen, setIsUVIndexOpen] = useState(false);
   
   const { theme } = useTheme();
   const ldClient = useLDClient();
@@ -178,6 +168,22 @@ const WeatherWidget: React.FC = () => {
 
   const handleCloseApiError = () => {
     setApiError(null);
+  };
+
+  const handleOpenAirQuality = () => {
+    setIsAirQualityOpen(true);
+  };
+
+  const handleCloseAirQuality = () => {
+    setIsAirQualityOpen(false);
+  };
+
+  const handleOpenUVIndex = () => {
+    setIsUVIndexOpen(true);
+  };
+
+  const handleCloseUVIndex = () => {
+    setIsUVIndexOpen(false);
   };
 
   const toggleAlertExpansion = (alertIndex: number) => {
@@ -637,6 +643,33 @@ SYSTEM ERROR: ${error}
                   <span className="detail-label">WIND:</span>
                   <span className="detail-value">{formatWindSpeed(weather.windSpeed)}</span>
                 </div>
+                
+                {/* Enhanced Weather Data Buttons */}
+                {weather.airQuality && (
+                  <div className="detail-row enhanced-data">
+                    <span className="detail-label">AIR QUALITY:</span>
+                    <button 
+                      className="enhanced-data-button air-quality-button"
+                      onClick={handleOpenAirQuality}
+                      title={`${weather.airQuality.category} (${weather.airQuality.index})`}
+                    >
+                      {weather.airQuality.index} - {weather.airQuality.category}
+                    </button>
+                  </div>
+                )}
+                
+                {weather.uvIndex && (
+                  <div className="detail-row enhanced-data">
+                    <span className="detail-label">UV INDEX:</span>
+                    <button 
+                      className="enhanced-data-button uv-index-button"
+                      onClick={handleOpenUVIndex}
+                      title={`${weather.uvIndex.risk} risk`}
+                    >
+                      {weather.uvIndex.value} - {weather.uvIndex.risk}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -689,6 +722,23 @@ SYSTEM ERROR: ${error}
         errorCode={apiError?.code}
         errorMessage={apiError?.message}
       />
+      
+      {/* Enhanced Weather Data Modals */}
+      {weather?.airQuality && (
+        <AirQualityModal
+          isOpen={isAirQualityOpen}
+          onClose={handleCloseAirQuality}
+          airQuality={weather.airQuality}
+        />
+      )}
+      
+      {weather?.uvIndex && (
+        <UVIndexModal
+          isOpen={isUVIndexOpen}
+          onClose={handleCloseUVIndex}
+          uvIndex={weather.uvIndex}
+        />
+      )}
     </div>
   );
 };
