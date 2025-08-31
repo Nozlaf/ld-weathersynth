@@ -231,11 +231,15 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
     // Get city name using reverse geocoding
     const geocodingApiUrl = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
     
+    // Get air quality data from Air Pollution API
+    const airQualityApiUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+    
     try {
-      // Make both API calls in parallel
-      const [weatherResponse, geocodingResponse] = await Promise.all([
+      // Make all API calls in parallel
+      const [weatherResponse, geocodingResponse, airQualityResponse] = await Promise.all([
         fetch(weatherApiUrl),
-        fetch(geocodingApiUrl)
+        fetch(geocodingApiUrl),
+        fetch(airQualityApiUrl)
       ]);
       
       if (!weatherResponse.ok) {
@@ -244,6 +248,7 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
       
       const weatherData = await weatherResponse.json();
       const geocodingData = await geocodingResponse.json();
+      const airQualityData = await airQualityResponse.json();
       
       // Add city name to weather data
       if (geocodingData && geocodingData.length > 0) {
@@ -251,9 +256,15 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
         weatherData.sys = { country: geocodingData[0].country };
       }
       
+      // Add air quality data to weather data
+      if (airQualityData && airQualityData.list && airQualityData.list.length > 0) {
+        weatherData.current = weatherData.current || {};
+        weatherData.current.air_quality = airQualityData.list[0];
+      }
+      
       return this.transformData(weatherData);
     } catch (error) {
-      console.error('Error fetching weather or geocoding data:', error);
+      console.error('Error fetching weather, geocoding, or air quality data:', error);
       throw error;
     }
   }
@@ -288,20 +299,20 @@ class OpenWeatherMapOneCallProvider extends BaseWeatherProvider {
     // Check for weather alerts
     const hasAlerts = data.alerts && data.alerts.length > 0;
     
-    // Process air quality data (One Call API includes this)
+    // Process air quality data (from Air Pollution API)
     let airQuality = null;
     if (data.current && data.current.air_quality) {
       const aq = data.current.air_quality;
       airQuality = {
-        index: aq['us-epa-index'],
-        category: this.getAQICategory(aq['us-epa-index']),
+        index: aq.main?.aqi || aq['us-epa-index'],
+        category: this.getAQICategory(aq.main?.aqi || aq['us-epa-index']),
         pollutants: {
-          pm25: aq.pm2_5,
-          pm10: aq.pm10,
-          o3: aq.o3,
-          no2: aq.no2,
-          so2: aq.so2,
-          co: aq.co
+          pm25: aq.components?.pm2_5 || aq.pm2_5,
+          pm10: aq.components?.pm10 || aq.pm10,
+          o3: aq.components?.o3 || aq.o3,
+          no2: aq.components?.no2 || aq.no2,
+          so2: aq.components?.so2 || aq.so2,
+          co: aq.components?.co || aq.co
         }
       };
     }

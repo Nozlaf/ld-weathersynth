@@ -122,8 +122,8 @@ class WeatherDebugService {
   private async checkApiStatus(): Promise<void> {
     try {
       const API_BASE_URL = process.env.NODE_ENV === 'production' 
-        ? '' // Same origin in production 
-        : 'http://localhost:3001'; // Backend server in development
+  ? '' // Same origin in production 
+  : 'http://localhost:5050'; // Backend server in development
       
       const response = await fetch(`${API_BASE_URL}/api/status`);
       

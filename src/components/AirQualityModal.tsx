@@ -40,7 +40,7 @@ const AirQualityModal: React.FC<AirQualityModalProps> = ({ isOpen, onClose, airQ
         <div className="modal-content">
           <div className="aqi-display">
             <div 
-              className="aqi-circle"
+              className="aqi-rectangle"
               style={{ backgroundColor: getAQIColor(airQuality.index) }}
             >
               <span className="aqi-value">{airQuality.index}</span>
