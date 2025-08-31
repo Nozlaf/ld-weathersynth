@@ -6,7 +6,7 @@
     "@launchdarkly/observability": "latest",
     "@launchdarkly/session-replay": "latest",
     "@types/node": "^16.18.126",
-    "@types/react": "^19.1.8",
+    "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.6",
     "highlight.run": "^9.18.23",
     "launchdarkly-react-client-sdk": "^3.8.1",
