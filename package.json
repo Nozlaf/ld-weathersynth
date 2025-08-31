@@ -11,7 +11,7 @@
     "highlight.run": "^9.18.23",
     "launchdarkly-react-client-sdk": "^3.8.1",
     "qrcode": "^1.5.4",
-    "react": "^19.1.0",
+    "react": "^19.1.1",
     "react-dom": "^19.1.0",
     "react-ga4": "^2.1.0",
     "react-scripts": "5.0.1",
